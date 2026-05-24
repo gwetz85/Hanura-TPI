@@ -13,6 +13,7 @@ model User {
   username  String   @unique
   password  String
   role      String   // DPC, PAC_BARAT, PAC_KOTA, PAC_TIMUR, PAC_BUKIT_BESTARI
+  phone     String?  // PAC contact number (optional)
   name      String
 
   ktaRequests          ProspectiveMember[]
@@ -32,6 +33,7 @@ model ProspectiveMember {
   address     String
   phone       String
   photoKtpUrl String?
+  ktpVerified Boolean @default(false) // true when DPC marks as verified
   status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
 
   createdAt   DateTime @default(now())
