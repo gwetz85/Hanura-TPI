@@ -1,0 +1,80 @@
+.sidebarContainer {
+  width: 260px;
+  min-height: 100vh;
+  background: rgba(15, 15, 17, 0.8);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.brand {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.brand h2 {
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+}
+
+.brand p {
+  font-size: 0.8rem;
+  color: var(--hanura-gold);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.navLink {
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navLink:hover {
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--hanura-gold);
+}
+
+.active {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--hanura-gold);
+  box-shadow: inset 4px 0 0 var(--hanura-gold);
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-light);
+}
+
+.logoutBtn {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 71, 87, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.logoutBtn:hover {
+  background: var(--danger);
+  color: #fff;
+}
