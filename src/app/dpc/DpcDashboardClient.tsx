@@ -79,6 +79,7 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
     { icon: "📋", title: "Kelola Usulan Kegiatan", desc: "Balas usulan kegiatan dari semua PAC.", href: "/dpc/activity" },
     { icon: "👥", title: "Upload Daftar Anggota", desc: "Upload daftar anggota resmi untuk masing-masing PAC.", href: "/dpc/members" },
     { icon: "⚙️", title: "Kelola Akun PAC", desc: "Tambah, ubah, atau hapus akun PAC.", href: "/dpc/accounts" },
+    { icon: "🗓️", title: "Kelola Event", desc: "Tambahkan kegiatan dan aktifkan countdown global.", href: "/dpc/events" },
   ];
 
   const pacColors = [

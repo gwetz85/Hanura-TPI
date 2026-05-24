@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
+import EventCountdown from "@/components/EventCountdown";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -47,7 +48,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           alt="Logo Hanura TPI"
           className="app-logo"
         />
-        <SessionWrapper>{children}</SessionWrapper>
+        <SessionWrapper>
+          <EventCountdown />
+          {children}
+        </SessionWrapper>
       </body>
     </html>
   );
