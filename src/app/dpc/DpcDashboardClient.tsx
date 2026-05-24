@@ -36,6 +36,7 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const menus = [
     { icon: "🪪", title: "Kelola Pengajuan KTA", desc: "Setujui atau tolak pengajuan KTA dari semua PAC.", href: "/dpc/kta" },
@@ -218,7 +219,13 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
                               <span className={styles.badgePending}>Belum Ada KTA</span>
                             )}
                           </td>
-                          <td className={styles.textBold}>{m.name}</td>
+                          <td 
+                            className={`${styles.textBold} ${styles.clickableName}`}
+                            onClick={() => setSelectedMember(m)}
+                            title="Klik untuk melihat detail lengkap"
+                          >
+                            {m.name}
+                          </td>
                           <td>{m.nik || "-"}</td>
                           <td>{m.phone || "-"}</td>
                           <td>{m.gender || "-"}</td>
@@ -237,6 +244,115 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
                 Menampilkan <strong>{filteredMembers.length}</strong> dari <strong>{members.length}</strong> anggota
               </div>
               <button className={styles.closeModalFooterBtn} onClick={() => setSelectedPac(null)}>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Secondary Floating Modal for Member Detail */}
+      {selectedMember && (
+        <div className={styles.detailOverlay} onClick={() => setSelectedMember(null)}>
+          <div className={styles.detailContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.detailHeader}>
+              <h4 className={styles.detailTitle}>📄 Detail Lengkap Anggota</h4>
+              <button className={styles.closeBtn} onClick={() => setSelectedMember(null)}>
+                &times;
+              </button>
+            </div>
+            
+            <div className={styles.detailBody}>
+              <div className={styles.detailCard}>
+                <div className={styles.detailAvatar}>
+                  {selectedMember.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
+                </div>
+                <h3 className={styles.detailName}>{selectedMember.name}</h3>
+                {selectedMember.nomorKta ? (
+                  <span className={styles.detailKtaBadge}>KTA: {selectedMember.nomorKta}</span>
+                ) : (
+                  <span className={styles.detailPendingBadge}>Belum Ada KTA</span>
+                )}
+              </div>
+
+              <div className={styles.infoGrid}>
+                {/* Personal Info Group */}
+                <div className={styles.infoGroup}>
+                  <h5 className={styles.groupTitle}>👤 Informasi Pribadi</h5>
+                  <div className={styles.infoRows}>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Nama Lengkap</span>
+                      <span className={styles.infoValue}>{selectedMember.name}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>NIK</span>
+                      <span className={styles.infoValue}>{selectedMember.nik || "-"}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Jenis Kelamin</span>
+                      <span className={styles.infoValue}>
+                        {selectedMember.gender === "L" ? "Laki-laki (L)" : selectedMember.gender === "P" ? "Perempuan (P)" : selectedMember.gender || "-"}
+                      </span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Tempat, Tgl Lahir</span>
+                      <span className={styles.infoValue}>
+                        {selectedMember.birthPlace || "-"}
+                        {selectedMember.birthDate ? `, ${selectedMember.birthDate}` : ""}
+                      </span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Status Pernikahan</span>
+                      <span className={styles.infoValue}>{selectedMember.maritalStatus || "-"}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Pekerjaan</span>
+                      <span className={styles.infoValue}>{selectedMember.jobStatus || "-"}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>No. Handphone</span>
+                      <span className={styles.infoValue}>{selectedMember.phone || "-"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address & Status Group */}
+                <div className={styles.infoGroup}>
+                  <h5 className={styles.groupTitle}>📍 Informasi Wilayah & Status</h5>
+                  <div className={styles.infoRows}>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Alamat Lengkap</span>
+                      <span className={styles.infoValue}>{selectedMember.address || "-"}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Kelurahan</span>
+                      <span className={styles.infoValue}>{selectedMember.village || "-"}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Kecamatan</span>
+                      <span className={styles.infoValue}>{selectedMember.subDistrict || "-"}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Status Verifikasi</span>
+                      <span className={styles.infoValue}>
+                        {selectedMember.isVerified ? (
+                          <span className={styles.statusVerified}>✓ Terverifikasi</span>
+                        ) : (
+                          <span className={styles.statusUnverified}>⚠ Belum Terverifikasi</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Nomor Urut</span>
+                      <span className={styles.infoValue}>{selectedMember.noUrut || "-"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.detailFooter}>
+              <button className={styles.closeModalFooterBtn} onClick={() => setSelectedMember(null)}>
                 Tutup
               </button>
             </div>
