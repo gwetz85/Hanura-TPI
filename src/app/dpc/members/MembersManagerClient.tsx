@@ -31,6 +31,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [filterPac, setFilterPac] = useState<string>("");
+  const [showModal, setShowModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialForm = {
@@ -50,16 +51,20 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     try {
       const url = editId ? `/api/dpc/members/${editId}` : "/api/dpc/members";
       const method = editId ? "PUT" : "POST";
+      
+      // Auto verify for manual input as requested
+      const payload = { ...formData, isVerified: true };
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Gagal menyimpan data");
       setFormData(initialForm);
       setEditId(null);
+      setShowModal(false);
       router.refresh();
     } catch (err: any) {
       alert(err.message);
@@ -86,7 +91,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
       village: m.village || "",
       subDistrict: m.subDistrict || "",
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowModal(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -104,7 +109,6 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // We must select a PAC first to associate uploaded members
     if (!filterPac) {
       alert("Pilih PAC terlebih dahulu pada filter sebelum mengupload Excel!");
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -121,7 +125,6 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
 
-        // Map excel data to member objects
         const payload = data.map((row: any) => ({
           pacId: filterPac,
           noUrut: row["Nomor urut"] || row["No"] || null,
@@ -166,7 +169,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
         
         <div className={styles.header}>
           <h1 className={styles.title}>Daftar Anggota</h1>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
             <select 
               value={filterPac} 
               onChange={e => setFilterPac(e.target.value)}
@@ -177,7 +180,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
               {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             
-            <div>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <input 
                 type="file" 
                 accept=".xlsx, .xls" 
@@ -190,99 +193,17 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
               >
-                {uploading ? "Mengupload..." : "Upload Excel (Sesuai Filter PAC)"}
+                {uploading ? "Mengupload..." : "Upload Excel"}
+              </button>
+              
+              <button 
+                className={styles.btnSave} 
+                onClick={() => { setEditId(null); setFormData(initialForm); setShowModal(true); }}
+              >
+                INPUT ANGGOTA
               </button>
             </div>
           </div>
-        </div>
-
-        <div style={{ marginBottom: "2rem", background: "rgba(0,0,0,0.2)", padding: "1.5rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem", color: "#f0f0f0" }}>
-            {editId ? "Edit Anggota" : "Tambah Anggota Manual"}
-          </h2>
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Pilih PAC</label>
-              <select value={formData.pacId} onChange={(e) => setFormData({ ...formData, pacId: e.target.value })} className={styles.replyInput} required>
-                <option value="">-- Pilih PAC --</option>
-                {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor Urut</label>
-              <input type="number" value={formData.noUrut} onChange={(e) => setFormData({ ...formData, noUrut: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor KTA</label>
-              <input type="text" value={formData.nomorKta} onChange={(e) => setFormData({ ...formData, nomorKta: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Lengkap</label>
-              <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={styles.replyInput} required />
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>NIK</label>
-              <input type="text" value={formData.nik} onChange={(e) => setFormData({ ...formData, nik: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>No. HP</label>
-              <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Jenis Kelamin</label>
-              <input type="text" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tempat Lahir</label>
-              <input type="text" value={formData.birthPlace} onChange={(e) => setFormData({ ...formData, birthPlace: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tanggal Lahir</label>
-              <input type="text" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} className={styles.replyInput} placeholder="DD/MM/YYYY" />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Perkawinan</label>
-              <input type="text" value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Pekerjaan</label>
-              <input type="text" value={formData.jobStatus} onChange={(e) => setFormData({ ...formData, jobStatus: e.target.value })} className={styles.replyInput} />
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Alamat Lengkap</label>
-              <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kelurahan</label>
-              <input type="text" value={formData.village} onChange={(e) => setFormData({ ...formData, village: e.target.value })} className={styles.replyInput} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kecamatan</label>
-              <input type="text" value={formData.subDistrict} onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value })} className={styles.replyInput} />
-            </div>
-            
-            <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "0.5rem", gap: "0.5rem" }}>
-              {editId && (
-                <button type="button" onClick={() => { setEditId(null); setFormData(initialForm); }} className={styles.btnReject}>Batal</button>
-              )}
-              <button type="submit" className={styles.btnSave} disabled={loading || !formData.pacId || !formData.name}>
-                {loading ? "Menyimpan..." : (editId ? "Update Anggota" : "Tambah Anggota")}
-              </button>
-            </div>
-          </form>
         </div>
 
         {filteredMembers.length === 0 ? (
@@ -341,6 +262,109 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
           </div>
         )}
       </div>
+
+      {/* Modal Input Anggota */}
+      {showModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)",
+          display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,
+          padding: "1rem"
+        }}>
+          <div style={{
+            background: "#1e1e24", border: "1px solid rgba(255,255,255,0.1)",
+            padding: "2rem", borderRadius: "16px", width: "100%", maxWidth: "800px",
+            maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+          }}>
+            <h2 style={{ fontSize: "1.5rem", marginBottom: "1.5rem", color: "#f0f0f0", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "1rem" }}>
+              {editId ? "Edit Anggota" : "Input Anggota Manual"}
+            </h2>
+            <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Pilih PAC</label>
+                <select value={formData.pacId} onChange={(e) => setFormData({ ...formData, pacId: e.target.value })} className={styles.replyInput} required>
+                  <option value="">-- Pilih PAC --</option>
+                  {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor Urut</label>
+                <input type="number" value={formData.noUrut} onChange={(e) => setFormData({ ...formData, noUrut: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor KTA</label>
+                <input type="text" value={formData.nomorKta} onChange={(e) => setFormData({ ...formData, nomorKta: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Lengkap</label>
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={styles.replyInput} required />
+              </div>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>NIK</label>
+                <input type="text" value={formData.nik} onChange={(e) => setFormData({ ...formData, nik: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>No. HP</label>
+                <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Jenis Kelamin</label>
+                <input type="text" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tempat Lahir</label>
+                <input type="text" value={formData.birthPlace} onChange={(e) => setFormData({ ...formData, birthPlace: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tanggal Lahir</label>
+                <input type="text" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} className={styles.replyInput} placeholder="DD/MM/YYYY" />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Perkawinan</label>
+                <input type="text" value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Pekerjaan</label>
+                <input type="text" value={formData.jobStatus} onChange={(e) => setFormData({ ...formData, jobStatus: e.target.value })} className={styles.replyInput} />
+              </div>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Alamat Lengkap</label>
+                <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kelurahan</label>
+                <input type="text" value={formData.village} onChange={(e) => setFormData({ ...formData, village: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kecamatan</label>
+                <input type="text" value={formData.subDistrict} onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value })} className={styles.replyInput} />
+              </div>
+              
+              <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "1.5rem", gap: "1rem" }}>
+                <button type="button" onClick={() => { setShowModal(false); setEditId(null); setFormData(initialForm); }} className={styles.btnReject}>
+                  Tutup
+                </button>
+                <button type="submit" className={styles.btnSave} disabled={loading || !formData.pacId || !formData.name}>
+                  {loading ? "Menyimpan..." : (editId ? "Update Anggota" : "Simpan Anggota")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
