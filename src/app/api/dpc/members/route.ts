@@ -10,25 +10,68 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { pacId, name, nik, address, phone } = await req.json();
+    const body = await req.json();
 
-    if (!pacId || !name) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (Array.isArray(body)) {
+      // Bulk insert
+      const members = body.map((m: any) => ({
+        pacId: m.pacId,
+        noUrut: m.noUrut ? parseInt(m.noUrut) : null,
+        nomorKta: m.nomorKta || null,
+        name: m.name,
+        nik: m.nik || null,
+        phone: m.phone || null,
+        gender: m.gender || null,
+        birthPlace: m.birthPlace || null,
+        birthDate: m.birthDate || null,
+        maritalStatus: m.maritalStatus || null,
+        jobStatus: m.jobStatus || null,
+        address: m.address || null,
+        village: m.village || null,
+        subDistrict: m.subDistrict || null,
+        isVerified: m.isVerified || false,
+      }));
+
+      // Filter out invalid items (must have pacId and name)
+      const validMembers = members.filter((m: any) => m.pacId && m.name);
+
+      await prisma.member.createMany({
+        data: validMembers,
+      });
+      return NextResponse.json({ message: `Successfully inserted ${validMembers.length} members` }, { status: 201 });
+    } else {
+      // Single insert
+      const { pacId, noUrut, nomorKta, name, nik, phone, gender, birthPlace, birthDate, maritalStatus, jobStatus, address, village, subDistrict, isVerified } = body;
+
+      if (!pacId || !name) {
+        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      }
+
+      const newMember = await prisma.member.create({
+        data: {
+          pacId,
+          noUrut: noUrut ? parseInt(noUrut) : null,
+          nomorKta: nomorKta || null,
+          name,
+          nik: nik || null,
+          phone: phone || null,
+          gender: gender || null,
+          birthPlace: birthPlace || null,
+          birthDate: birthDate || null,
+          maritalStatus: maritalStatus || null,
+          jobStatus: jobStatus || null,
+          address: address || null,
+          village: village || null,
+          subDistrict: subDistrict || null,
+          isVerified: isVerified || false,
+        },
+      });
+
+      return NextResponse.json(newMember, { status: 201 });
     }
-
-    const newMember = await prisma.member.create({
-      data: {
-        pacId,
-        name,
-        nik: nik || null,
-        address: address || null,
-        phone: phone || null,
-      },
-    });
-
-    return NextResponse.json(newMember, { status: 201 });
   } catch (error) {
-    console.error("Error creating member:", error);
+    console.error("Error creating member(s):", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

@@ -1,15 +1,27 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import styles from "../crud.module.css";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
 
 interface Pac { id: string; name: string; role: string; }
 interface Member {
   id: string;
+  pacId: string;
+  noUrut: number | null;
+  nomorKta: string | null;
   name: string;
   nik: string | null;
-  address: string | null;
   phone: string | null;
+  gender: string | null;
+  birthPlace: string | null;
+  birthDate: string | null;
+  maritalStatus: string | null;
+  jobStatus: string | null;
+  address: string | null;
+  village: string | null;
+  subDistrict: string | null;
+  isVerified: boolean;
   pac: { name: string; role: string };
   createdAt: Date | string;
 }
@@ -17,13 +29,18 @@ interface Member {
 export default function MembersManagerClient({ members, pacs }: { members: Member[], pacs: Pac[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    pacId: "",
-    name: "",
-    nik: "",
-    address: "",
-    phone: ""
-  });
+  const [uploading, setUploading] = useState(false);
+  const [filterPac, setFilterPac] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const initialForm = {
+    pacId: "", noUrut: "", nomorKta: "", name: "", nik: "", phone: "", gender: "",
+    birthPlace: "", birthDate: "", maritalStatus: "", jobStatus: "", address: "", village: "", subDistrict: ""
+  };
+  const [formData, setFormData] = useState(initialForm);
+  const [editId, setEditId] = useState<string | null>(null);
+
+  const filteredMembers = filterPac ? members.filter(m => m.pacId === filterPac) : members;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,14 +48,18 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     setLoading(true);
 
     try {
-      const res = await fetch("/api/dpc/members", {
-        method: "POST",
+      const url = editId ? `/api/dpc/members/${editId}` : "/api/dpc/members";
+      const method = editId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Gagal menambah anggota");
-      setFormData({ pacId: "", name: "", nik: "", address: "", phone: "" });
+      if (!res.ok) throw new Error("Gagal menyimpan data");
+      setFormData(initialForm);
+      setEditId(null);
       router.refresh();
     } catch (err: any) {
       alert(err.message);
@@ -47,106 +68,272 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     }
   };
 
+  const handleEdit = (m: Member) => {
+    setEditId(m.id);
+    setFormData({
+      pacId: m.pacId,
+      noUrut: m.noUrut?.toString() || "",
+      nomorKta: m.nomorKta || "",
+      name: m.name || "",
+      nik: m.nik || "",
+      phone: m.phone || "",
+      gender: m.gender || "",
+      birthPlace: m.birthPlace || "",
+      birthDate: m.birthDate || "",
+      maritalStatus: m.maritalStatus || "",
+      jobStatus: m.jobStatus || "",
+      address: m.address || "",
+      village: m.village || "",
+      subDistrict: m.subDistrict || "",
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Yakin ingin menghapus anggota ini?")) return;
+    try {
+      const res = await fetch(`/api/dpc/members/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Gagal menghapus");
+      router.refresh();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // We must select a PAC first to associate uploaded members
+    if (!filterPac) {
+      alert("Pilih PAC terlebih dahulu pada filter sebelum mengupload Excel!");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        // Map excel data to member objects
+        const payload = data.map((row: any) => ({
+          pacId: filterPac,
+          noUrut: row["Nomor urut"] || row["No"] || null,
+          nomorKta: row["Nomor KTA"]?.toString() || null,
+          name: row["Nama"] || row["Name"] || "Tanpa Nama",
+          nik: row["NIK"]?.toString() || null,
+          phone: row["Kontak"]?.toString() || null,
+          gender: row["JK"]?.toString() || null,
+          birthPlace: row["Tempat Lahir"]?.toString() || null,
+          birthDate: row["Tanggal Lahir"]?.toString() || null,
+          maritalStatus: row["Status Perkawinan"]?.toString() || null,
+          jobStatus: row["Status Pekerjaan"]?.toString() || null,
+          address: row["Alamat"]?.toString() || null,
+          village: row["Nama Kelurahan"]?.toString() || null,
+          subDistrict: row["Nama Kecamatan"]?.toString() || null,
+          isVerified: row["Verifikasi"] === true || row["Verifikasi"] === "Ya" || row["Verifikasi"] === "Yes"
+        }));
+
+        const res = await fetch("/api/dpc/members", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error("Gagal menyimpan bulk data");
+        alert("Upload sukses!");
+        router.refresh();
+      } catch (err: any) {
+        alert("Upload gagal: " + err.message);
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.glassCard}>
         <a href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</a>
+        
         <div className={styles.header}>
           <h1 className={styles.title}>Daftar Anggota</h1>
-          <span style={{ color: "#a0a0a0", fontSize: "0.875rem" }}>{members.length} anggota</span>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <select 
+              value={filterPac} 
+              onChange={e => setFilterPac(e.target.value)}
+              className={styles.replyInput}
+              style={{ width: "200px" }}
+            >
+              <option value="">Semua PAC</option>
+              {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            
+            <div>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                ref={fileInputRef} 
+                style={{ display: "none" }} 
+                onChange={handleFileUpload} 
+              />
+              <button 
+                className={styles.btnApprove} 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? "Mengupload..." : "Upload Excel (Sesuai Filter PAC)"}
+              </button>
+            </div>
+          </div>
         </div>
 
         <div style={{ marginBottom: "2rem", background: "rgba(0,0,0,0.2)", padding: "1.5rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem", color: "#f0f0f0" }}>Tambah Anggota Baru</h2>
+          <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem", color: "#f0f0f0" }}>
+            {editId ? "Edit Anggota" : "Tambah Anggota Manual"}
+          </h2>
           <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Pilih PAC</label>
-              <select 
-                value={formData.pacId} 
-                onChange={(e) => setFormData({ ...formData, pacId: e.target.value })}
-                className={styles.replyInput}
-                required
-              >
+              <select value={formData.pacId} onChange={(e) => setFormData({ ...formData, pacId: e.target.value })} className={styles.replyInput} required>
                 <option value="">-- Pilih PAC --</option>
-                {pacs.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
+                {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Lengkap</label>
-              <input 
-                type="text" 
-                value={formData.name} 
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={styles.replyInput}
-                required
-              />
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>NIK (Opsional)</label>
-              <input 
-                type="text" 
-                value={formData.nik} 
-                onChange={(e) => setFormData({ ...formData, nik: e.target.value })}
-                className={styles.replyInput}
-              />
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor Urut</label>
+              <input type="number" value={formData.noUrut} onChange={(e) => setFormData({ ...formData, noUrut: e.target.value })} className={styles.replyInput} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>No. HP (Opsional)</label>
-              <input 
-                type="text" 
-                value={formData.phone} 
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className={styles.replyInput}
-              />
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor KTA</label>
+              <input type="text" value={formData.nomorKta} onChange={(e) => setFormData({ ...formData, nomorKta: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Lengkap</label>
+              <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={styles.replyInput} required />
             </div>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", gridColumn: "1 / -1" }}>
-              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Alamat (Opsional)</label>
-              <textarea 
-                value={formData.address} 
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className={styles.replyInput}
-                style={{ minHeight: "80px" }}
-              />
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>NIK</label>
+              <input type="text" value={formData.nik} onChange={(e) => setFormData({ ...formData, nik: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>No. HP</label>
+              <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Jenis Kelamin</label>
+              <input type="text" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tempat Lahir</label>
+              <input type="text" value={formData.birthPlace} onChange={(e) => setFormData({ ...formData, birthPlace: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tanggal Lahir</label>
+              <input type="text" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} className={styles.replyInput} placeholder="DD/MM/YYYY" />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Perkawinan</label>
+              <input type="text" value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Pekerjaan</label>
+              <input type="text" value={formData.jobStatus} onChange={(e) => setFormData({ ...formData, jobStatus: e.target.value })} className={styles.replyInput} />
             </div>
             
-            <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Alamat Lengkap</label>
+              <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kelurahan</label>
+              <input type="text" value={formData.village} onChange={(e) => setFormData({ ...formData, village: e.target.value })} className={styles.replyInput} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kecamatan</label>
+              <input type="text" value={formData.subDistrict} onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value })} className={styles.replyInput} />
+            </div>
+            
+            <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "0.5rem", gap: "0.5rem" }}>
+              {editId && (
+                <button type="button" onClick={() => { setEditId(null); setFormData(initialForm); }} className={styles.btnReject}>Batal</button>
+              )}
               <button type="submit" className={styles.btnSave} disabled={loading || !formData.pacId || !formData.name}>
-                {loading ? "Menyimpan..." : "Tambah Anggota"}
+                {loading ? "Menyimpan..." : (editId ? "Update Anggota" : "Tambah Anggota")}
               </button>
             </div>
           </form>
         </div>
 
-        {members.length === 0 ? (
+        {filteredMembers.length === 0 ? (
           <p className={styles.empty}>Belum ada data anggota terdaftar.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className={styles.table}>
+            <table className={styles.table} style={{ whiteSpace: "nowrap" }}>
               <thead>
                 <tr>
+                  <th>No</th>
                   <th>PAC</th>
+                  <th>No KTA</th>
                   <th>Nama</th>
                   <th>NIK</th>
-                  <th>No. HP</th>
+                  <th>No HP</th>
+                  <th>JK</th>
+                  <th>TTL</th>
+                  <th>Status Kawin</th>
+                  <th>Pekerjaan</th>
                   <th>Alamat</th>
-                  <th>Tanggal Daftar</th>
+                  <th>Kelurahan</th>
+                  <th>Kecamatan</th>
+                  <th>Verifikasi</th>
+                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {members.map(m => (
+                {filteredMembers.map((m, idx) => (
                   <tr key={m.id}>
-                    <td><span className={styles.badge} style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>{m.pac.name}</span></td>
+                    <td>{m.noUrut || idx + 1}</td>
+                    <td>{m.pac.name}</td>
+                    <td>{m.nomorKta || "-"}</td>
                     <td style={{ fontWeight: 600 }}>{m.name}</td>
                     <td>{m.nik || "-"}</td>
                     <td>{m.phone || "-"}</td>
+                    <td>{m.gender || "-"}</td>
+                    <td>{m.birthPlace ? m.birthPlace + ", " : ""}{m.birthDate || "-"}</td>
+                    <td>{m.maritalStatus || "-"}</td>
+                    <td>{m.jobStatus || "-"}</td>
                     <td>{m.address || "-"}</td>
-                    <td>{new Date(m.createdAt).toLocaleDateString("id-ID")}</td>
+                    <td>{m.village || "-"}</td>
+                    <td>{m.subDistrict || "-"}</td>
+                    <td>
+                      <span className={styles.badge} style={{ background: m.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: m.isVerified ? "#2ed573" : "#ff4757" }}>
+                        {m.isVerified ? "Terverifikasi" : "Belum"}
+                      </span>
+                    </td>
+                    <td>
+                      <button className={styles.btnApprove} onClick={() => handleEdit(m)} style={{ marginBottom: "4px" }}>Edit</button>
+                      <button className={styles.btnReject} onClick={() => handleDelete(m.id)}>Hapus</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

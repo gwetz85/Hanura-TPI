@@ -53,14 +53,24 @@ model ActivitySuggestion {
 }
 
 model Member {
-  id          String   @id @default(cuid())
-  pacId       String
-  pac         User     @relation(fields: [pacId], references: [id])
-  name        String
-  nik         String?
-  address     String?
-  phone       String?
+  id            String   @id @default(cuid())
+  pacId         String
+  pac           User     @relation(fields: [pacId], references: [id])
+  noUrut        Int?
+  nomorKta      String?
+  name          String
+  nik           String?
+  phone         String?
+  gender        String?
+  birthPlace    String?
+  birthDate     String?
+  maritalStatus String?
+  jobStatus     String?
+  address       String?
+  village       String?
+  subDistrict   String?
+  isVerified    Boolean  @default(false)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
