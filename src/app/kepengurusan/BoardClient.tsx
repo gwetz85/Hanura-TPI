@@ -183,7 +183,12 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
                 <div>
                   <label className={styles.formLabel}>Tingkatan Kepengurusan *</label>
-                  <input required className={styles.formInput} value={formData.level} onChange={e => setFormData({...formData, level: e.target.value})} placeholder="Contoh: Pengurus Pusat Partai Hanura, Pengurus DPD, dll" />
+                  <select required className={`${styles.formInput} ${styles.formSelect}`} value={formData.level} onChange={e => setFormData({...formData, level: e.target.value})}>
+                    <option value="" disabled>Pilih Tingkatan</option>
+                    <option value="DPD">DPD</option>
+                    <option value="DPC">DPC</option>
+                    <option value="PAC">PAC</option>
+                  </select>
                 </div>
                 <div>
                   <label className={styles.formLabel}>Jabatan *</label>
