@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      String   // DPC, PAC_BARAT, PAC_KOTA, PAC_TIMUR, PAC_BUKIT_BESTARI
+  name      String
+
+  ktaRequests          ProspectiveMember[]
+  activitySuggestions  ActivitySuggestion[]
+  members              Member[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProspectiveMember {
+  id          String   @id @default(cuid())
+  pacId       String
+  pac         User     @relation(fields: [pacId], references: [id])
+  name        String
+  nik         String
+  address     String
+  phone       String
+  photoKtpUrl String?
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ActivitySuggestion {
+  id          String   @id @default(cuid())
+  pacId       String
+  pac         User     @relation(fields: [pacId], references: [id])
+  title       String
+  description String
+  date        DateTime?
+  reply       String?
+  status      String   @default("PENDING") // PENDING, REPLIED
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Member {
+  id          String   @id @default(cuid())
+  pacId       String
+  pac         User     @relation(fields: [pacId], references: [id])
+  name        String
+  nik         String?
+  address     String?
+  phone       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

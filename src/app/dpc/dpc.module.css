@@ -1,0 +1,74 @@
+/* DPC Dashboard Styles */
+.container { min-height: 100vh; padding: 2.5rem; }
+
+.header { margin-bottom: 2rem; }
+.greeting { font-size: 0.875rem; color: #a0a0a0; margin-bottom: 0.25rem; }
+.title {
+  font-size: 2rem; font-weight: 700;
+  background: linear-gradient(to right, #fff, #D4AF37);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: rgba(25, 25, 30, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.statNum { font-size: 2rem; font-weight: 700; color: #D4AF37; }
+.statLabel { font-size: 0.8rem; color: #a0a0a0; margin-top: 0.25rem; }
+
+.navGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.navCard {
+  background: rgba(25, 25, 30, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  text-decoration: none; color: #f0f0f0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.navCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  border-color: rgba(212,175,55,0.4);
+}
+
+.navIcon { font-size: 2.5rem; }
+.navTitle { font-size: 1.1rem; font-weight: 600; color: #D4AF37; }
+.navDesc { font-size: 0.875rem; color: #a0a0a0; line-height: 1.5; }
+.navArrow { margin-top: auto; font-size: 0.875rem; color: #D4AF37; transition: transform 0.2s; }
+.navCard:hover .navArrow { transform: translateX(4px); }
+
+.logoutBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 71, 87, 0.4);
+  color: #ff4757;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.logoutBtn:hover { background: rgba(255, 71, 87, 0.1); border-color: #ff4757; }
