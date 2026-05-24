@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
-import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -14,11 +13,35 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id" className={inter.variable}>
-      <body style={{ position: "relative" }}>
-        {/* Transparent logo fixed to top‑right */}
-        <div style={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
-          <Image src="/logo.png" alt="Hanura TPI" width={80} height={80} priority />
-        </div>
+      <head>
+        <style>{`
+          .app-logo {
+            position: fixed;
+            top: 12px;
+            right: 16px;
+            z-index: 9999;
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            opacity: 0.92;
+            transition: opacity 0.2s, transform 0.2s;
+            filter: drop-shadow(0 2px 8px rgba(212,175,55,0.3));
+            pointer-events: auto;
+          }
+          .app-logo:hover {
+            opacity: 1;
+            transform: scale(1.08);
+          }
+        `}</style>
+      </head>
+      <body>
+        {/* Transparent logo fixed to top‑right on every page */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="Logo Hanura TPI"
+          className="app-logo"
+        />
         <SessionWrapper>{children}</SessionWrapper>
       </body>
     </html>
