@@ -10,10 +10,24 @@ export default async function KtaManagerPage() {
   const session = await getServerSession(authOptions);
   if (!session || session.user?.role !== "DPC") redirect("/login");
 
-  const submissions = await prisma.prospectiveMember.findMany({
-    include: { pac: { select: { name: true, role: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [submissions, pacs] = await Promise.all([
+    prisma.prospectiveMember.findMany({
+      include: { pac: { select: { id: true, name: true, role: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: { role: { not: "DPC" } },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  return <KtaManagerClient submissions={submissions} />;
+  // Convert Date objects to JSON-safe strings for Client Component
+  const serializedSubmissions = submissions.map(s => ({
+    ...s,
+    createdAt: s.createdAt.toISOString(),
+    updatedAt: s.updatedAt.toISOString(),
+  }));
+
+  return <KtaManagerClient submissions={serializedSubmissions} pacs={pacs} />;
 }

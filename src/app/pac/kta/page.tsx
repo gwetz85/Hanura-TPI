@@ -39,6 +39,22 @@ export default function KtaPage() {
     setError("");
     setSuccess("");
 
+    // Validate phone number if photo is uploaded, and validate its format if entered
+    if (photoFile && !form.phone.trim()) {
+      setError("⚠️ Nomor Handphone wajib diisi jika Anda mengupload foto KTP.");
+      setLoading(false);
+      return;
+    }
+
+    if (form.phone.trim()) {
+      const phoneRegex = /^081[0-9]{7,11}$/;
+      if (!phoneRegex.test(form.phone.trim())) {
+        setError("⚠️ Format nomor handphone tidak valid. Harus diawali dengan '081' dan berisi 10 hingga 14 digit angka (contoh: 08123456789).");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       let photoKtpUrl = "";
       if (photoFile) {
@@ -53,7 +69,7 @@ export default function KtaPage() {
       const res = await fetch("/api/kta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, photoKtpUrl }),
+        body: JSON.stringify({ ...form, phone: form.phone.trim(), photoKtpUrl }),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -93,8 +109,20 @@ export default function KtaPage() {
             <input className={styles.input} name="address" value={form.address} onChange={handleChange} placeholder="Alamat lengkap" />
           </div>
           <div className={styles.inputGroup}>
-            <label>Nomor Handphone</label>
-            <input className={styles.input} name="phone" value={form.phone} onChange={handleChange} placeholder="Contoh: 08123456789" />
+            <label>Nomor Handphone {photoFile ? "*" : ""}</label>
+            <input
+              className={styles.input}
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="Contoh: 08123456789"
+              required={!!photoFile}
+              pattern="^081[0-9]{7,11}$"
+              title="Nomor handphone harus diawali dengan '081' dan memiliki panjang 10-14 digit angka"
+            />
+            <span style={{ fontSize: "0.75rem", color: "#a0a0a0", marginTop: "0.25rem", display: "block" }}>
+              Format wajib: diawali 081 (contoh: 08123456789). Wajib diisi jika mengupload foto KTP.
+            </span>
           </div>
           <div className={styles.inputGroup}>
             <label>Foto KTP</label>
