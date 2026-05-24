@@ -32,6 +32,7 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [filterPac, setFilterPac] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [viewMember, setViewMember] = useState<Member | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
@@ -44,7 +45,17 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
   const [formData, setFormData] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const filteredMembers = filterPac ? members.filter(m => m.pacId === filterPac) : members;
+  const byPac = filterPac ? members.filter(m => m.pacId === filterPac) : members;
+  const q = searchQuery.toLowerCase().trim();
+  const filteredMembers = q
+    ? byPac.filter(m =>
+        m.name.toLowerCase().includes(q) ||
+        (m.nik ?? "").toLowerCase().includes(q) ||
+        (m.nomorKta ?? "").toLowerCase().includes(q) ||
+        (m.phone ?? "").toLowerCase().includes(q) ||
+        m.pac.name.toLowerCase().includes(q)
+      )
+    : byPac;
   const verifiedCount = filteredMembers.filter(m => m.isVerified).length;
   const unverifiedCount = filteredMembers.length - verifiedCount;
 
@@ -215,24 +226,66 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Daftar Anggota</h1>
-            {filteredMembers.length > 0 && (
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>Total: {filteredMembers.length}</span>
-                <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(46,213,115,0.15)", color: "#2ed573", border: "1px solid rgba(46,213,115,0.3)" }}>
-                  ✓ Verified: {verifiedCount}
-                </span>
-                <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(255,71,87,0.15)", color: "#ff4757", border: "1px solid rgba(255,71,87,0.3)" }}>
-                  ✗ Belum: {unverifiedCount}
-                </span>
-              </div>
-            )}
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
+                {q ? `${filteredMembers.length} hasil dari ${byPac.length}` : `Total: ${filteredMembers.length}`}
+              </span>
+              {filteredMembers.length > 0 && (
+                <>
+                  <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(46,213,115,0.15)", color: "#2ed573", border: "1px solid rgba(46,213,115,0.3)" }}>
+                    ✓ Verified: {verifiedCount}
+                  </span>
+                  <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(255,71,87,0.15)", color: "#ff4757", border: "1px solid rgba(255,71,87,0.3)" }}>
+                    ✗ Belum: {unverifiedCount}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+            {/* Search Bar */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <span style={{ position: "absolute", left: "0.75rem", color: "#888", fontSize: "1rem", pointerEvents: "none" }}>🔍</span>
+              <input
+                id="dpc-member-search"
+                type="text"
+                placeholder="Cari nama, NIK, No KTA, No HP..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{
+                  paddingLeft: "2.2rem",
+                  paddingRight: searchQuery ? "2rem" : "0.75rem",
+                  paddingTop: "0.5rem",
+                  paddingBottom: "0.5rem",
+                  width: "260px",
+                  background: "rgba(0,0,0,0.35)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "10px",
+                  color: "#f0f0f0",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  transition: "border-color 0.2s",
+                  fontFamily: "inherit"
+                }}
+                onFocus={e => (e.target.style.borderColor = "#D4AF37")}
+                onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.12)")}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  style={{ position: "absolute", right: "0.5rem", background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "1rem", lineHeight: 1, padding: "0" }}
+                  title="Hapus pencarian"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {/* Filter PAC */}
             <select
               value={filterPac}
               onChange={e => setFilterPac(e.target.value)}
               className={styles.replyInput}
-              style={{ width: "200px" }}
+              style={{ width: "180px" }}
             >
               <option value="">Semua PAC</option>
               {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -271,7 +324,11 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
         </div>
 
         {filteredMembers.length === 0 ? (
-          <p className={styles.empty}>Belum ada data anggota terdaftar.</p>
+          <p className={styles.empty}>
+            {q
+              ? `Tidak ada anggota yang cocok dengan pencarian "${searchQuery}".`
+              : "Belum ada data anggota terdaftar."}
+          </p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className={styles.table} style={{ whiteSpace: "nowrap" }}>

@@ -29,6 +29,7 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true);
   const [viewMember, setViewMember] = useState<Member | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -67,26 +68,78 @@ export default function MembersPage() {
 
   const verifiedCount = members.filter(m => m.isVerified).length;
   const unverifiedCount = members.length - verifiedCount;
+  const q = searchQuery.toLowerCase().trim();
+  const displayedMembers = q
+    ? members.filter(m =>
+        m.name.toLowerCase().includes(q) ||
+        (m.nik ?? "").toLowerCase().includes(q) ||
+        (m.nomorKta ?? "").toLowerCase().includes(q) ||
+        (m.phone ?? "").toLowerCase().includes(q)
+      )
+    : members;
 
   return (
     <div className={styles.container}>
       <div className={styles.glassCard}>
         <a href="/pac" className={styles.backLink}>← Kembali ke Dashboard</a>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
-          <h1 className={styles.title}>Daftar Anggota PAC</h1>
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ color: "#a0a0a0", fontSize: "0.875rem" }}>Total: {members.length} anggota</span>
-            <span style={{ padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.8rem", fontWeight: 600, background: "rgba(46,213,115,0.15)", color: "#2ed573", border: "1px solid rgba(46,213,115,0.3)" }}>
-              ✓ Terverifikasi: {verifiedCount}
-            </span>
-            <span style={{ padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.8rem", fontWeight: 600, background: "rgba(255,71,87,0.15)", color: "#ff4757", border: "1px solid rgba(255,71,87,0.3)" }}>
-              ✗ Belum: {unverifiedCount}
-            </span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <h1 className={styles.title}>Daftar Anggota PAC</h1>
+            <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ color: "#a0a0a0", fontSize: "0.8rem" }}>
+                {q ? `${displayedMembers.length} hasil dari ${members.length}` : `Total: ${members.length} anggota`}
+              </span>
+              <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(46,213,115,0.15)", color: "#2ed573", border: "1px solid rgba(46,213,115,0.3)" }}>
+                ✓ Terverifikasi: {verifiedCount}
+              </span>
+              <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(255,71,87,0.15)", color: "#ff4757", border: "1px solid rgba(255,71,87,0.3)" }}>
+                ✗ Belum: {unverifiedCount}
+              </span>
+            </div>
+          </div>
+          {/* Search Bar */}
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <span style={{ position: "absolute", left: "0.75rem", color: "#888", fontSize: "1rem", pointerEvents: "none" }}>🔍</span>
+            <input
+              id="pac-member-search"
+              type="text"
+              placeholder="Cari nama, NIK, No KTA, No HP..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{
+                paddingLeft: "2.2rem",
+                paddingRight: searchQuery ? "2rem" : "0.75rem",
+                paddingTop: "0.5rem",
+                paddingBottom: "0.5rem",
+                width: "260px",
+                background: "rgba(0,0,0,0.35)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "10px",
+                color: "#f0f0f0",
+                fontSize: "0.875rem",
+                outline: "none",
+                transition: "border-color 0.2s",
+                fontFamily: "inherit"
+              }}
+              onFocus={e => (e.target.style.borderColor = "#D4AF37")}
+              onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.12)")}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{ position: "absolute", right: "0.5rem", background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "1rem", lineHeight: 1, padding: "0" }}
+                title="Hapus pencarian"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
         {loading ? <p>Memuat data...</p> : members.length === 0 ? (
           <p className={styles.empty}>Belum ada data anggota. DPC akan mengupload daftar anggota Anda.</p>
+        ) : displayedMembers.length === 0 ? (
+          <p className={styles.empty}>Tidak ada anggota yang cocok dengan pencarian &ldquo;{searchQuery}&rdquo;.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className={styles.table} style={{ whiteSpace: "nowrap" }}>
@@ -103,7 +156,7 @@ export default function MembersPage() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m, idx) => (
+                {displayedMembers.map((m, idx) => (
                   <tr key={m.id}>
                     <td>{m.noUrut || idx + 1}</td>
                     <td>{m.nomorKta || "-"}</td>
