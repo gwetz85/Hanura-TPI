@@ -1,19 +1,20 @@
 /* DPC Dashboard Styles */
-.container { min-height: 100vh; padding: 2.5rem; }
+.container { min-height: 100vh; padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; }
 
-.header { margin-bottom: 2rem; }
-.greeting { font-size: 0.875rem; color: #a0a0a0; margin-bottom: 0.25rem; }
+.header { margin-bottom: 1.25rem; }
+.greeting { font-size: 0.8rem; color: #a0a0a0; margin-bottom: 0.15rem; }
 .title {
-  font-size: 2rem; font-weight: 700;
+  font-size: 1.6rem; font-weight: 700;
   background: linear-gradient(to right, #fff, #D4AF37);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 0;
 }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
 .statCard {
@@ -21,7 +22,7 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   text-align: center;
   transition: transform 0.2s ease, border-color 0.3s ease;
 }
@@ -30,19 +31,19 @@
   border-color: rgba(212,175,55,0.3);
 }
 
-.statNum { font-size: 2rem; font-weight: 700; color: #D4AF37; }
-.statLabel { font-size: 0.8rem; color: #a0a0a0; margin-top: 0.25rem; }
+.statNum { font-size: 1.6rem; font-weight: 700; color: #D4AF37; }
+.statLabel { font-size: 0.72rem; color: #a0a0a0; margin-top: 0.2rem; }
 
 /* Anggota per PAC Section */
 .sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .sectionTitle {
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #f0f0f0;
 }
@@ -57,9 +58,9 @@
 
 .pacGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .pacCard {
@@ -83,23 +84,23 @@
 }
 
 .pacCardBody {
-  padding: 1.25rem 1.5rem;
+  padding: 0.9rem 1.1rem;
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto auto;
-  gap: 0.25rem 1rem;
+  gap: 0.2rem 0.75rem;
   align-items: center;
 }
 
 .pacCardIcon {
   grid-row: 1 / 3;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
@@ -112,7 +113,7 @@
 }
 
 .pacCardName {
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #f0f0f0;
   white-space: nowrap;
@@ -130,7 +131,7 @@
 .pacCardCount {
   grid-column: 3;
   grid-row: 1;
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   font-weight: 800;
   line-height: 1;
   text-align: right;
@@ -150,9 +151,9 @@
 /* Menu Navigation */
 .navGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .navCard {
@@ -160,8 +161,8 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 2rem;
-  display: flex; flex-direction: column; gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
   text-decoration: none; color: #f0f0f0;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
@@ -172,10 +173,10 @@
   border-color: rgba(212,175,55,0.4);
 }
 
-.navIcon { font-size: 2.5rem; }
-.navTitle { font-size: 1.1rem; font-weight: 600; color: #D4AF37; }
-.navDesc { font-size: 0.875rem; color: #a0a0a0; line-height: 1.5; }
-.navArrow { margin-top: auto; font-size: 0.875rem; color: #D4AF37; transition: transform 0.2s; }
+.navIcon { font-size: 1.8rem; }
+.navTitle { font-size: 0.95rem; font-weight: 600; color: #D4AF37; }
+.navDesc { font-size: 0.8rem; color: #a0a0a0; line-height: 1.4; }
+.navArrow { margin-top: auto; font-size: 0.8rem; color: #D4AF37; transition: transform 0.2s; }
 .navCard:hover .navArrow { transform: translateX(4px); }
 
 .logoutBtn {

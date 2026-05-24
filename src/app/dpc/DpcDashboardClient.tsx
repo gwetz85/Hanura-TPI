@@ -111,7 +111,7 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
       </div>
 
       {/* Target & Gender Analysis Grid */}
-      <div className={styles.sectionHeader} style={{ marginTop: "2.5rem" }}>
+      <div className={styles.sectionHeader} style={{ marginTop: "1.25rem" }}>
         <h2 className={styles.sectionTitle}>🎯 Analisis & Target Anggota</h2>
         <span className={styles.sectionSub}>Target DPC: 480 Anggota</span>
       </div>
