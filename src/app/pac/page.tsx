@@ -29,6 +29,12 @@ export default function PacDashboard() {
       desc: "Lihat daftar anggota resmi PAC Anda yang telah diupload oleh DPC.",
       href: "/pac/members",
     },
+    {
+      icon: "🏛️",
+      title: "Kepengurusan",
+      desc: "Struktur organisasi dan kepengurusan Partai Hanura.",
+      href: "/kepengurusan",
+    },
   ];
 
   return (
