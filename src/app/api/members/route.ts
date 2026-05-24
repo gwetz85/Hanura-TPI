@@ -9,6 +9,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const pacId = searchParams.get("pacId");
+  const gender = searchParams.get("gender"); // "L", "P", or "other"
 
   let targetPacId = session.user.id;
 
@@ -16,9 +17,11 @@ export async function GET(request: Request) {
     if (pacId) {
       targetPacId = pacId;
     } else {
-      // If DPC doesn't specify a PAC, return all members
+      // If DPC doesn't specify a PAC, return all members (optionally filtered by gender)
+      const genderWhere = buildGenderWhere(gender);
       const members = await prisma.member.findMany({
-        orderBy: { createdAt: "desc" },
+        where: genderWhere ?? undefined,
+        orderBy: { noUrut: "asc" },
       });
       return NextResponse.json(members);
     }
@@ -27,9 +30,17 @@ export async function GET(request: Request) {
     targetPacId = session.user.id;
   }
 
+  const genderWhere = buildGenderWhere(gender);
   const members = await prisma.member.findMany({
-    where: { pacId: targetPacId },
-    orderBy: { createdAt: "desc" },
+    where: { pacId: targetPacId, ...(genderWhere ?? {}) },
+    orderBy: { noUrut: "asc" },
   });
   return NextResponse.json(members);
+}
+
+function buildGenderWhere(gender: string | null) {
+  if (gender === "L") return { OR: [{ gender: "L" }, { gender: "l" }] };
+  if (gender === "P") return { OR: [{ gender: "P" }, { gender: "p" }] };
+  if (gender === "other") return { AND: [{ gender: { notIn: ["L", "l", "P", "p"] } }] };
+  return null;
 }

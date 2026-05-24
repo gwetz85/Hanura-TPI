@@ -6,6 +6,7 @@ import styles from "./dpc.module.css";
 interface PacUser { id: string; name: string; role: string; }
 interface Member {
   id: string;
+  pacId: string;
   noUrut: number | null;
   nomorKta: string | null;
   name: string;
@@ -31,14 +32,47 @@ interface Props {
   totalMembers: number;
   maleCount: number;
   femaleCount: number;
+  otherCount: number;
 }
 
-export default function DpcDashboardClient({ userName, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers, maleCount, femaleCount }: Props) {
+export default function DpcDashboardClient({ userName, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers, maleCount, femaleCount, otherCount }: Props) {
   const [selectedPac, setSelectedPac] = useState<{ id: string; name: string } | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Gender filter modal
+  const [genderFilter, setGenderFilter] = useState<{ label: string; value: string } | null>(null);
+  const [genderMembers, setGenderMembers] = useState<Member[]>([]);
+  const [genderLoading, setGenderLoading] = useState(false);
+  const [genderSearch, setGenderSearch] = useState("");
+
+  const handleGenderClick = async (label: string, value: string) => {
+    setGenderFilter({ label, value });
+    setGenderLoading(true);
+    setGenderSearch("");
+    try {
+      const res = await fetch(`/api/members?gender=${value}`);
+      if (res.ok) setGenderMembers(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGenderLoading(false);
+    }
+  };
+
+  const filteredGenderMembers = genderMembers.filter((m) => {
+    const q = genderSearch.toLowerCase();
+    return (
+      m.name.toLowerCase().includes(q) ||
+      (m.nik && m.nik.includes(q)) ||
+      (m.nomorKta && m.nomorKta.toLowerCase().includes(q))
+    );
+  });
+
+  // Helper: get PAC name by pacId
+  const getPacName = (pacId: string) => pacUsers.find((p) => p.id === pacId)?.name ?? "-";
 
   const menus = [
     { icon: "🪪", title: "Kelola Pengajuan KTA", desc: "Setujui atau tolak pengajuan KTA dari semua PAC.", href: "/dpc/kta" },
@@ -117,14 +151,38 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
       </div>
 
       <div className={styles.statsGrid}>
-        <div className={styles.statCard} style={{ borderLeft: "4px solid #f093fb" }}>
+        <div
+          className={styles.statCard}
+          style={{ borderLeft: "4px solid #f093fb", cursor: "pointer" }}
+          onClick={() => handleGenderClick("Anggota Perempuan (P)", "P")}
+          title="Klik untuk lihat daftar anggota perempuan"
+        >
           <div className={styles.statNum} style={{ color: "#f093fb" }}>{femaleCount}</div>
           <div className={styles.statLabel}>Anggota Perempuan (P)</div>
+          <div style={{ fontSize: "0.65rem", color: "#f093fb", marginTop: "4px", opacity: 0.7 }}>Klik untuk detail →</div>
         </div>
-        <div className={styles.statCard} style={{ borderLeft: "4px solid #4facfe" }}>
+        <div
+          className={styles.statCard}
+          style={{ borderLeft: "4px solid #4facfe", cursor: "pointer" }}
+          onClick={() => handleGenderClick("Anggota Laki-Laki (L)", "L")}
+          title="Klik untuk lihat daftar anggota laki-laki"
+        >
           <div className={styles.statNum} style={{ color: "#4facfe" }}>{maleCount}</div>
           <div className={styles.statLabel}>Anggota Laki-Laki (L)</div>
+          <div style={{ fontSize: "0.65rem", color: "#4facfe", marginTop: "4px", opacity: 0.7 }}>Klik untuk detail →</div>
         </div>
+        {otherCount > 0 && (
+          <div
+            className={styles.statCard}
+            style={{ borderLeft: "4px solid #a0aec0", cursor: "pointer" }}
+            onClick={() => handleGenderClick("Tidak Terklasifikasi", "other")}
+            title="Klik untuk lihat anggota tanpa klasifikasi gender"
+          >
+            <div className={styles.statNum} style={{ color: "#a0aec0" }}>{otherCount}</div>
+            <div className={styles.statLabel}>Tidak Terklasifikasi</div>
+            <div style={{ fontSize: "0.65rem", color: "#a0aec0", marginTop: "4px", opacity: 0.7 }}>Klik untuk detail →</div>
+          </div>
+        )}
         <div className={styles.statCard} style={{ borderLeft: "4px solid #D4AF37" }}>
           <div className={styles.statNum} style={{ color: "#D4AF37" }}>480</div>
           <div className={styles.statLabel}>Target Anggota</div>
@@ -382,6 +440,105 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
             
             <div className={styles.detailFooter}>
               <button className={styles.closeModalFooterBtn} onClick={() => setSelectedMember(null)}>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gender Filter Modal */}
+      {genderFilter && (
+        <div className={styles.modalOverlay} onClick={() => setGenderFilter(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 className={styles.modalTitle}>
+                  {genderFilter.value === "P" ? "♀" : genderFilter.value === "L" ? "♂" : "⚪"} {genderFilter.label}
+                </h3>
+                <p className={styles.modalSubtitle}>
+                  {genderLoading ? "Memuat..." : `${filteredGenderMembers.length} dari ${genderMembers.length} anggota`}
+                </p>
+              </div>
+              <button className={styles.closeBtn} onClick={() => setGenderFilter(null)}>
+                &times;
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.searchWrapper}>
+                <span className={styles.searchIcon}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Cari berdasarkan nama, NIK, atau nomor KTA..."
+                  className={styles.searchInput}
+                  value={genderSearch}
+                  onChange={(e) => setGenderSearch(e.target.value)}
+                />
+              </div>
+
+              {genderLoading ? (
+                <div className={styles.loadingContainer}>
+                  <div className={styles.spinner} />
+                  <p>Memuat data anggota...</p>
+                </div>
+              ) : filteredGenderMembers.length === 0 ? (
+                <div className={styles.emptyContainer}>
+                  <p className={styles.emptyText}>
+                    {genderSearch ? "Tidak ada anggota yang cocok dengan pencarian." : "Tidak ada data anggota."}
+                  </p>
+                </div>
+              ) : (
+                <div className={styles.tableWrapper}>
+                  <table className={styles.memberTable}>
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>No. KTA</th>
+                        <th>Nama Lengkap</th>
+                        <th>NIK</th>
+                        <th>No. HP</th>
+                        <th>PAC</th>
+                        <th>Kecamatan</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredGenderMembers.map((m, idx) => (
+                        <tr key={m.id}>
+                          <td className={styles.textCenter}>{m.noUrut || idx + 1}</td>
+                          <td>
+                            {m.nomorKta ? (
+                              <span className={styles.badgeKta}>{m.nomorKta}</span>
+                            ) : (
+                              <span className={styles.badgePending}>Belum Ada</span>
+                            )}
+                          </td>
+                          <td
+                            className={`${styles.textBold} ${styles.clickableName}`}
+                            onClick={() => setSelectedMember(m)}
+                            title="Klik untuk melihat detail lengkap"
+                          >
+                            {m.name}
+                          </td>
+                          <td>{m.nik || "-"}</td>
+                          <td>{m.phone || "-"}</td>
+                          <td style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)" }}>
+                            {getPacName(m.pacId)}
+                          </td>
+                          <td className={styles.textMuted}>{m.subDistrict || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <div className={styles.memberCountInfo}>
+                Menampilkan <strong>{filteredGenderMembers.length}</strong> dari <strong>{genderMembers.length}</strong> anggota
+              </div>
+              <button className={styles.closeModalFooterBtn} onClick={() => setGenderFilter(null)}>
                 Tutup
               </button>
             </div>

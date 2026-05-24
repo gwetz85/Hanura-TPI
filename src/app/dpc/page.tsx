@@ -10,7 +10,7 @@ export default async function DpcPage() {
   const session = await getServerSession(authOptions);
   if (!session || session.user?.role !== "DPC") redirect("/login");
 
-  const [ktaCount, activityCount, pacUsers, memberCounts, maleCount, femaleCount] = await Promise.all([
+  const [ktaCount, activityCount, pacUsers, memberCounts, maleCount, femaleCount, totalMembers] = await Promise.all([
     prisma.prospectiveMember.count({ where: { status: "PENDING" } }),
     prisma.activitySuggestion.count({ where: { status: "PENDING" } }),
     prisma.user.findMany({ where: { role: { not: "DPC" } }, select: { id: true, name: true, role: true } }),
@@ -20,6 +20,7 @@ export default async function DpcPage() {
     }),
     prisma.member.count({ where: { OR: [{ gender: "L" }, { gender: "l" }] } }),
     prisma.member.count({ where: { OR: [{ gender: "P" }, { gender: "p" }] } }),
+    prisma.member.count(),
   ]);
 
   // Build a map of pacId -> member count
@@ -28,8 +29,7 @@ export default async function DpcPage() {
     memberCountMap[mc.pacId] = mc._count.id;
   }
 
-  // Calculate total members across all PACs
-  const totalMembers = memberCounts.reduce((sum, mc) => sum + mc._count.id, 0);
+  const otherCount = totalMembers - maleCount - femaleCount;
 
   return (
     <DpcDashboardClient
@@ -41,6 +41,7 @@ export default async function DpcPage() {
       totalMembers={totalMembers}
       maleCount={maleCount}
       femaleCount={femaleCount}
+      otherCount={otherCount}
     />
   );
 }
