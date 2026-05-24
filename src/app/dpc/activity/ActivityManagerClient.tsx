@@ -6,7 +6,7 @@ interface Suggestion {
   id: string;
   title: string;
   description: string;
-  date?: string | null;
+  date?: Date | string | null;
   reply?: string | null;
   status: string;
   pac: { name: string; role: string };

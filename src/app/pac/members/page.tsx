@@ -12,15 +12,17 @@ export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/members")
+        .then(r => r.json())
+        .then(data => setMembers(data))
+        .finally(() => setLoading(false));
+    }
+  }, [status]);
+
   if (status === "loading") return <div className={styles.container}><p>Loading...</p></div>;
   if (!session) { router.push("/login"); return null; }
-
-  useEffect(() => {
-    fetch("/api/members")
-      .then(r => r.json())
-      .then(data => setMembers(data))
-      .finally(() => setLoading(false));
-  }, []);
 
   return (
     <div className={styles.container}>

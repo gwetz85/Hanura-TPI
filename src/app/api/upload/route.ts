@@ -10,8 +10,11 @@ export async function POST(request: Request) {
   }
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const filename = `${Date.now()}_${file.name}`;
-  const uploadPath = path.join(process.cwd(), "public", "uploads", filename);
+  const uploadedFile = file as any;
+  const filename = `${Date.now()}_${uploadedFile.name || "uploaded_file"}`;
+  const uploadDir = path.join(process.cwd(), "public", "uploads");
+  await fs.mkdir(uploadDir, { recursive: true });
+  const uploadPath = path.join(uploadDir, filename);
   await fs.writeFile(uploadPath, buffer);
   const urlPath = `/uploads/${filename}`;
   return NextResponse.json({ url: urlPath });
