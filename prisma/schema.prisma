@@ -19,6 +19,7 @@ model User {
   ktaRequests          ProspectiveMember[]
   activitySuggestions  ActivitySuggestion[]
   members              Member[]
+  activityComments     ActivityComment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -33,7 +34,7 @@ model ProspectiveMember {
   address     String
   phone       String
   photoKtpUrl String?
-  ktpVerified Boolean @default(false) // true when DPC marks as verified
+  ktpVerified Boolean @default(false)
   status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
 
   createdAt   DateTime @default(now())
@@ -41,17 +42,32 @@ model ProspectiveMember {
 }
 
 model ActivitySuggestion {
-  id          String   @id @default(cuid())
-  pacId       String
-  pac         User     @relation(fields: [pacId], references: [id])
-  title       String
-  description String
-  date        DateTime?
-  reply       String?
-  status      String   @default("PENDING") // PENDING, REPLIED
+  id           String   @id @default(cuid())
+  pacId        String
+  pac          User     @relation(fields: [pacId], references: [id])
+  title        String
+  description  String
+  date         DateTime?
+  time         String?
+  location     String?
+  activityType String?
+  reply        String?
+  status       String   @default("PENDING") // PENDING, REPLIED
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  comments     ActivityComment[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ActivityComment {
+  id           String             @id @default(cuid())
+  suggestionId String
+  suggestion   ActivitySuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User               @relation(fields: [authorId], references: [id])
+  message      String
+  createdAt    DateTime           @default(now())
 }
 
 model Member {
