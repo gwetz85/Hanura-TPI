@@ -9,10 +9,22 @@ interface Event {
   date: string;
 }
 
-export default function EventCountdown() {
-  const { data: session } = useSession();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+export default function EventCountdown({ initialEvent }: { initialEvent: Event | null }) {
+  const { data: session, status } = useSession();
+  const [event, setEvent] = useState<Event | null>(initialEvent);
+  
+  // Initialize time left immediately to avoid flashing
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(() => {
+    if (!initialEvent) return null;
+    const difference = new Date(initialEvent.date).getTime() - new Date().getTime();
+    if (difference <= 0) return null;
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((difference % (1000 * 60)) / 1000)
+    };
+  });
 
   useEffect(() => {
     // Only fetch if authenticated
@@ -54,6 +66,8 @@ export default function EventCountdown() {
     return () => clearInterval(interval);
   }, [event]);
 
+  // Render empty placeholder if status is loading to avoid hydration mismatch
+  if (status === "loading") return null;
   if (!session || !event || !timeLeft) return null;
 
   return (

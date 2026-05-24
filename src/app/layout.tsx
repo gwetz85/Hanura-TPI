@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import EventCountdown from "@/components/EventCountdown";
+import prisma from "@/lib/prisma";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -16,7 +17,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const events = await prisma.event.findMany({
+    where: { isActive: true, date: { gt: new Date() } },
+    orderBy: { date: "asc" },
+    take: 1
+  });
+  const activeEvent = events.length > 0 ? {
+    id: events[0].id,
+    title: events[0].title,
+    description: events[0].description,
+    date: events[0].date.toISOString()
+  } : null;
+
   return (
     <html lang="id" className={inter.variable}>
       <head>
@@ -49,7 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           className="app-logo"
         />
         <SessionWrapper>
-          <EventCountdown />
+          <EventCountdown initialEvent={activeEvent} />
           {children}
         </SessionWrapper>
       </body>
