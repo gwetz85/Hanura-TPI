@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             position: fixed;
             top: 16px;
             right: 20px;
-            z-index: 9999;
+            z-index: 99999;
             width: 96px;
             height: 96px;
             object-fit: contain;
