@@ -17,15 +17,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <style>{`
           .app-logo {
             position: fixed;
-            top: 12px;
-            right: 16px;
+            top: 16px;
+            right: 20px;
             z-index: 9999;
-            width: 64px;
-            height: 64px;
+            width: 96px;
+            height: 96px;
             object-fit: contain;
-            opacity: 0.92;
+            opacity: 0.95;
             transition: opacity 0.2s, transform 0.2s;
-            filter: drop-shadow(0 2px 8px rgba(212,175,55,0.3));
+            filter: drop-shadow(0 4px 12px rgba(212,175,55,0.4));
             pointer-events: auto;
           }
           .app-logo:hover {
