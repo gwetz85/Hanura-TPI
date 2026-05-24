@@ -26,13 +26,15 @@ interface Member {
   createdAt: Date | string;
 }
 
-export default function MembersManagerClient({ members, pacs }: { members: Member[], pacs: Pac[] }) {
+export default function MembersManagerClient({ members: initialMembers, pacs }: { members: Member[], pacs: Pac[] }) {
   const router = useRouter();
+  const [members, setMembers] = useState<Member[]>(initialMembers);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [filterPac, setFilterPac] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
   const [viewMember, setViewMember] = useState<Member | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialForm = {
@@ -43,6 +45,34 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
   const [editId, setEditId] = useState<string | null>(null);
 
   const filteredMembers = filterPac ? members.filter(m => m.pacId === filterPac) : members;
+  const verifiedCount = filteredMembers.filter(m => m.isVerified).length;
+  const unverifiedCount = filteredMembers.length - verifiedCount;
+
+  // Toggle verifikasi oleh DPC — tersync langsung ke database
+  const toggleVerification = async (mId: string, currentStatus: boolean) => {
+    if (verifyingId === mId) return;
+    setVerifyingId(mId);
+    // Optimistic UI update
+    setMembers(prev => prev.map(m => m.id === mId ? { ...m, isVerified: !currentStatus } : m));
+    // Update viewMember jika sedang ditampilkan
+    setViewMember(prev => prev && prev.id === mId ? { ...prev, isVerified: !currentStatus } : prev);
+
+    try {
+      const res = await fetch("/api/dpc/members/verify", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: mId, isVerified: !currentStatus }),
+      });
+      if (!res.ok) throw new Error("Gagal menyimpan status verifikasi");
+    } catch (err: any) {
+      alert(err.message);
+      // Revert on error
+      setMembers(prev => prev.map(m => m.id === mId ? { ...m, isVerified: currentStatus } : m));
+      setViewMember(prev => prev && prev.id === mId ? { ...prev, isVerified: currentStatus } : prev);
+    } finally {
+      setVerifyingId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +82,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     try {
       const url = editId ? `/api/dpc/members/${editId}` : "/api/dpc/members";
       const method = editId ? "PUT" : "POST";
-      
+
       const payload = { ...formData, isVerified: true };
 
       const res = await fetch(url, {
@@ -109,7 +139,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     if (!filterPac) return;
     const pacName = pacs.find(p => p.id === filterPac)?.name;
     if (!confirm(`PERINGATAN! Anda yakin ingin menghapus SELURUH data anggota untuk ${pacName}? Aksi ini tidak dapat dibatalkan.`)) return;
-    
+
     try {
       const res = await fetch(`/api/dpc/members?pacId=${filterPac}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus semua data");
@@ -181,12 +211,25 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     <div className={styles.container}>
       <div className={styles.glassCard}>
         <a href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</a>
-        
+
         <div className={styles.header}>
-          <h1 className={styles.title}>Daftar Anggota</h1>
+          <div>
+            <h1 className={styles.title}>Daftar Anggota</h1>
+            {filteredMembers.length > 0 && (
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>Total: {filteredMembers.length}</span>
+                <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(46,213,115,0.15)", color: "#2ed573", border: "1px solid rgba(46,213,115,0.3)" }}>
+                  ✓ Verified: {verifiedCount}
+                </span>
+                <span style={{ padding: "0.15rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, background: "rgba(255,71,87,0.15)", color: "#ff4757", border: "1px solid rgba(255,71,87,0.3)" }}>
+                  ✗ Belum: {unverifiedCount}
+                </span>
+              </div>
+            )}
+          </div>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-            <select 
-              value={filterPac} 
+            <select
+              value={filterPac}
               onChange={e => setFilterPac(e.target.value)}
               className={styles.replyInput}
               style={{ width: "200px" }}
@@ -194,7 +237,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
               <option value="">Semua PAC</option>
               {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            
+
             {filterPac && (
               <button className={styles.btnReject} onClick={handleDeleteAll}>
                 Hapus Semua Data PAC Ini
@@ -202,23 +245,23 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
             )}
 
             <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input 
-                type="file" 
-                accept=".xlsx, .xls" 
-                ref={fileInputRef} 
-                style={{ display: "none" }} 
-                onChange={handleFileUpload} 
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileUpload}
               />
-              <button 
-                className={styles.btnApprove} 
+              <button
+                className={styles.btnApprove}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
               >
                 {uploading ? "Mengupload..." : "Upload Excel"}
               </button>
-              
-              <button 
-                className={styles.btnSave} 
+
+              <button
+                className={styles.btnSave}
                 onClick={() => { setEditId(null); setFormData(initialForm); setShowModal(true); }}
               >
                 INPUT ANGGOTA
@@ -241,7 +284,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                   <th>NIK</th>
                   <th>No HP</th>
                   <th>JK</th>
-                  <th>Verifikasi</th>
+                  <th style={{ textAlign: "center" }}>Status Verifikasi</th>
                   <th style={{ textAlign: "right" }}>Aksi</th>
                 </tr>
               </thead>
@@ -255,10 +298,29 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                     <td>{m.nik || "-"}</td>
                     <td>{m.phone || "-"}</td>
                     <td>{m.gender || "-"}</td>
-                    <td>
-                      <span className={styles.badge} style={{ background: m.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: m.isVerified ? "#2ed573" : "#ff4757" }}>
-                        {m.isVerified ? "Terverifikasi" : "Belum"}
-                      </span>
+                    <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                      <button
+                        id={`dpc-verify-btn-${m.id}`}
+                        onClick={() => toggleVerification(m.id, m.isVerified)}
+                        disabled={verifyingId === m.id}
+                        title={m.isVerified ? "Klik untuk batalkan verifikasi" : "Klik untuk verifikasi anggota ini"}
+                        style={{
+                          padding: "0.3rem 0.9rem",
+                          borderRadius: "20px",
+                          border: m.isVerified ? "1px solid rgba(46,213,115,0.5)" : "1px solid rgba(255,71,87,0.5)",
+                          background: m.isVerified ? "rgba(46,213,115,0.18)" : "rgba(255,71,87,0.12)",
+                          color: m.isVerified ? "#2ed573" : "#ff4757",
+                          cursor: verifyingId === m.id ? "wait" : "pointer",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          transition: "all 0.2s ease",
+                          whiteSpace: "nowrap",
+                          opacity: verifyingId === m.id ? 0.6 : 1,
+                          minWidth: "130px"
+                        }}
+                      >
+                        {verifyingId === m.id ? "⟳ Menyimpan..." : m.isVerified ? "✓ Terverifikasi" : "✗ Belum Verified"}
+                      </button>
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <button className={styles.btnApprove} onClick={() => setViewMember(m)} style={{ marginRight: "4px", background: "rgba(100,149,237,0.15)", color: "#6495ed", border: "1px solid rgba(100,149,237,0.3)" }}>View</button>
@@ -303,13 +365,32 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
               <div style={{ color: "#aaa" }}>Nama Kelurahan</div><div>: {viewMember.village || "-"}</div>
               <div style={{ color: "#aaa" }}>Nama Kecamatan</div><div>: {viewMember.subDistrict || "-"}</div>
               <div style={{ color: "#aaa" }}>Status Verifikasi</div>
-              <div>: 
-                <span style={{ marginLeft: "0.5rem", padding: "0.2rem 0.5rem", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 600, background: viewMember.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: viewMember.isVerified ? "#2ed573" : "#ff4757" }}>
-                  {viewMember.isVerified ? "Terverifikasi" : "Belum"}
+              <div>:&nbsp;
+                <span style={{ padding: "0.2rem 0.6rem", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 600, background: viewMember.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: viewMember.isVerified ? "#2ed573" : "#ff4757" }}>
+                  {viewMember.isVerified ? "✓ Terverifikasi" : "✗ Belum Diverifikasi"}
                 </span>
               </div>
             </div>
-            <div style={{ marginTop: "2rem", textAlign: "right" }}>
+            <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+              {/* Tombol Verifikasi di dalam modal */}
+              <button
+                onClick={() => toggleVerification(viewMember.id, viewMember.isVerified)}
+                disabled={verifyingId === viewMember.id}
+                style={{
+                  padding: "0.6rem 1.2rem",
+                  borderRadius: "10px",
+                  border: viewMember.isVerified ? "1px solid rgba(255,71,87,0.4)" : "1px solid rgba(46,213,115,0.4)",
+                  background: viewMember.isVerified ? "rgba(255,71,87,0.15)" : "rgba(46,213,115,0.15)",
+                  color: viewMember.isVerified ? "#ff4757" : "#2ed573",
+                  fontWeight: 600,
+                  cursor: verifyingId === viewMember.id ? "wait" : "pointer",
+                  fontSize: "0.875rem",
+                  transition: "all 0.2s ease",
+                  opacity: verifyingId === viewMember.id ? 0.6 : 1
+                }}
+              >
+                {verifyingId === viewMember.id ? "⟳ Menyimpan..." : viewMember.isVerified ? "✗ Batalkan Verifikasi" : "✓ Verifikasi Anggota"}
+              </button>
               <button onClick={() => setViewMember(null)} className={styles.btnSave}>Tutup</button>
             </div>
           </div>
@@ -333,7 +414,6 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
               {editId ? "Edit Anggota" : "Input Anggota Manual"}
             </h2>
             <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-              {/* Form fields stay the same */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Pilih PAC</label>
                 <select value={formData.pacId} onChange={(e) => setFormData({ ...formData, pacId: e.target.value })} className={styles.replyInput} required>
@@ -341,7 +421,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                   {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nomor Urut</label>
                 <input type="number" value={formData.noUrut} onChange={(e) => setFormData({ ...formData, noUrut: e.target.value })} className={styles.replyInput} />
@@ -356,7 +436,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Lengkap</label>
                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={styles.replyInput} required />
               </div>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>NIK</label>
                 <input type="text" value={formData.nik} onChange={(e) => setFormData({ ...formData, nik: e.target.value })} className={styles.replyInput} />
@@ -391,7 +471,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Pekerjaan</label>
                 <input type="text" value={formData.jobStatus} onChange={(e) => setFormData({ ...formData, jobStatus: e.target.value })} className={styles.replyInput} />
               </div>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Alamat Lengkap</label>
                 <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className={styles.replyInput} />
@@ -406,7 +486,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kecamatan</label>
                 <input type="text" value={formData.subDistrict} onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value })} className={styles.replyInput} />
               </div>
-              
+
               <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "1.5rem", gap: "1rem" }}>
                 <button type="button" onClick={() => { setShowModal(false); setEditId(null); setFormData(initialForm); }} className={styles.btnReject}>
                   Tutup
