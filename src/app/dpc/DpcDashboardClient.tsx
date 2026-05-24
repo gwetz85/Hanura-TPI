@@ -1,8 +1,27 @@
 "use client";
+import { useState } from "react";
 import { signOut } from "next-auth/react";
 import styles from "./dpc.module.css";
 
 interface PacUser { id: string; name: string; role: string; }
+interface Member {
+  id: string;
+  noUrut: number | null;
+  nomorKta: string | null;
+  name: string;
+  nik: string | null;
+  phone: string | null;
+  gender: string | null;
+  birthPlace: string | null;
+  birthDate: string | null;
+  maritalStatus: string | null;
+  jobStatus: string | null;
+  address: string | null;
+  village: string | null;
+  subDistrict: string | null;
+  isVerified: boolean;
+}
+
 interface Props {
   userName: string;
   pendingKta: number;
@@ -13,6 +32,11 @@ interface Props {
 }
 
 export default function DpcDashboardClient({ userName, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers }: Props) {
+  const [selectedPac, setSelectedPac] = useState<{ id: string; name: string } | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const menus = [
     { icon: "🪪", title: "Kelola Pengajuan KTA", desc: "Setujui atau tolak pengajuan KTA dari semua PAC.", href: "/dpc/kta" },
     { icon: "📋", title: "Kelola Usulan Kegiatan", desc: "Balas usulan kegiatan dari semua PAC.", href: "/dpc/activity" },
@@ -20,7 +44,6 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
     { icon: "⚙️", title: "Kelola Akun PAC", desc: "Tambah, ubah, atau hapus akun PAC.", href: "/dpc/accounts" },
   ];
 
-  // Color palette for PAC cards
   const pacColors = [
     { gradient: "linear-gradient(135deg, #667eea, #764ba2)", glow: "rgba(102,126,234,0.25)", accent: "#667eea" },
     { gradient: "linear-gradient(135deg, #f093fb, #f5576c)", glow: "rgba(240,147,251,0.25)", accent: "#f093fb" },
@@ -29,6 +52,34 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
     { gradient: "linear-gradient(135deg, #fa709a, #fee140)", glow: "rgba(250,112,154,0.25)", accent: "#fa709a" },
     { gradient: "linear-gradient(135deg, #a18cd1, #fbc2eb)", glow: "rgba(161,140,209,0.25)", accent: "#a18cd1" },
   ];
+
+  const handlePacClick = async (pac: { id: string; name: string }) => {
+    setSelectedPac(pac);
+    setLoading(true);
+    setSearchQuery("");
+    try {
+      const res = await fetch(`/api/members?pacId=${pac.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data);
+      } else {
+        console.error("Failed to fetch members");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredMembers = members.filter((m) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      m.name.toLowerCase().includes(q) ||
+      (m.nik && m.nik.includes(q)) ||
+      (m.nomorKta && m.nomorKta.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <div className={styles.container}>
@@ -56,7 +107,6 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
         </div>
       </div>
 
-      {/* Anggota per PAC Section */}
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>📊 Anggota per PAC</h2>
         <span className={styles.sectionSub}>{pacUsers.length} PAC terdaftar</span>
@@ -66,7 +116,12 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
           const color = pacColors[idx % pacColors.length];
           const count = memberCountMap[pac.id] || 0;
           return (
-            <div key={pac.id} className={styles.pacCard} style={{ boxShadow: `0 8px 30px ${color.glow}` }}>
+            <div
+              key={pac.id}
+              className={styles.pacCard}
+              style={{ boxShadow: `0 8px 30px ${color.glow}`, cursor: "pointer" }}
+              onClick={() => handlePacClick({ id: pac.id, name: pac.name })}
+            >
               <div className={styles.pacCardAccent} style={{ background: color.gradient }} />
               <div className={styles.pacCardBody}>
                 <div className={styles.pacCardIcon} style={{ background: color.gradient }}>
@@ -75,6 +130,7 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
                 <div className={styles.pacCardInfo}>
                   <div className={styles.pacCardName}>{pac.name}</div>
                   <div className={styles.pacCardRole}>{pac.role}</div>
+                  <span className={styles.clickHint}>Klik untuk detail →</span>
                 </div>
                 <div className={styles.pacCardCount} style={{ color: color.accent }}>
                   {count}
@@ -100,6 +156,93 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
       <button className={styles.logoutBtn} onClick={() => signOut({ callbackUrl: "/login" })}>
         Keluar
       </button>
+
+      {selectedPac && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedPac(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 className={styles.modalTitle}>Daftar Anggota</h3>
+                <p className={styles.modalSubtitle}>{selectedPac.name}</p>
+              </div>
+              <button className={styles.closeBtn} onClick={() => setSelectedPac(null)}>
+                &times;
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <div className={styles.searchWrapper}>
+                <span className={styles.searchIcon}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Cari berdasarkan nama, NIK, atau nomor KTA..."
+                  className={styles.searchInput}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {loading ? (
+                <div className={styles.loadingContainer}>
+                  <div className={styles.spinner} />
+                  <p>Memuat data anggota...</p>
+                </div>
+              ) : filteredMembers.length === 0 ? (
+                <div className={styles.emptyContainer}>
+                  <p className={styles.emptyText}>
+                    {searchQuery ? "Tidak ada anggota yang cocok dengan pencarian." : "Belum ada data anggota untuk PAC ini."}
+                  </p>
+                </div>
+              ) : (
+                <div className={styles.tableWrapper}>
+                  <table className={styles.memberTable}>
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>No. KTA</th>
+                        <th>Nama Lengkap</th>
+                        <th>NIK</th>
+                        <th>No. HP</th>
+                        <th>Gender</th>
+                        <th>Alamat</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredMembers.map((m, idx) => (
+                        <tr key={m.id}>
+                          <td className={styles.textCenter}>{m.noUrut || idx + 1}</td>
+                          <td>
+                            {m.nomorKta ? (
+                              <span className={styles.badgeKta}>{m.nomorKta}</span>
+                            ) : (
+                              <span className={styles.badgePending}>Belum Ada KTA</span>
+                            )}
+                          </td>
+                          <td className={styles.textBold}>{m.name}</td>
+                          <td>{m.nik || "-"}</td>
+                          <td>{m.phone || "-"}</td>
+                          <td>{m.gender || "-"}</td>
+                          <td className={styles.textMuted}>
+                            {m.address ? `${m.address}${m.village ? `, Kel. ${m.village}` : ""}${m.subDistrict ? `, Kec. ${m.subDistrict}` : ""}` : "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <div className={styles.memberCountInfo}>
+                Menampilkan <strong>{filteredMembers.length}</strong> dari <strong>{members.length}</strong> anggota
+              </div>
+              <button className={styles.closeModalFooterBtn} onClick={() => setSelectedPac(null)}>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
