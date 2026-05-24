@@ -51,7 +51,9 @@ function LoginForm() {
       
       <main className={styles.main}>
         <div className={`glass-card ${styles.loginCard}`}>
-          <div className={styles.header}>
+          <div className={styles.header} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Hanura Logo" style={{ width: "80px", height: "auto", marginBottom: "1rem" }} />
             <h1 className="text-gradient">HANURA</h1>
             <p>Portal Komunikasi Internal DPC & PAC</p>
           </div>
