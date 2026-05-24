@@ -10,6 +10,10 @@ async function removeWhiteBackground() {
   const image = sharp(inputPath);
   const { width, height } = await image.metadata();
   
+  if (!width || !height) {
+    throw new Error('Could not get image dimensions');
+  }
+
   // Get raw pixel data (RGBA)
   const { data, info } = await image
     .ensureAlpha()
@@ -17,18 +21,47 @@ async function removeWhiteBackground() {
     .toBuffer({ resolveWithObject: true });
 
   const pixels = new Uint8Array(data);
+  const visited = new Uint8Array(width * height);
+  const queue = [];
   
   // Threshold: if a pixel is close to white/light gray, make it transparent
-  const threshold = 230; // pixels with R, G, B all above this are considered "background"
+  const threshold = 240; // pixels with R, G, B all above this are considered "background"
   
-  for (let i = 0; i < pixels.length; i += 4) {
-    const r = pixels[i];
-    const g = pixels[i + 1];
-    const b = pixels[i + 2];
+  function enqueue(x, y) {
+    if (x < 0 || x >= width || y < 0 || y >= height) return;
+    const idx = y * width + x;
+    if (visited[idx]) return;
+    visited[idx] = 1;
+    queue.push([x, y]);
+  }
+
+  // Enqueue outer border pixels to ensure we catch any background borders
+  for (let x = 0; x < width; x++) {
+    enqueue(x, 0);
+    enqueue(x, height - 1);
+  }
+  for (let y = 0; y < height; y++) {
+    enqueue(0, y);
+    enqueue(width - 1, y);
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const [cx, cy] = queue[head++];
+    const idx = (cy * width + cx) * 4;
+    const r = pixels[idx];
+    const g = pixels[idx + 1];
+    const b = pixels[idx + 2];
     
     // If pixel is very close to white (the background color)
     if (r >= threshold && g >= threshold && b >= threshold) {
-      pixels[i + 3] = 0; // Set alpha to 0 (transparent)
+      pixels[idx + 3] = 0; // Set alpha to 0 (transparent)
+      
+      // Enqueue 4-way neighbors
+      enqueue(cx + 1, cy);
+      enqueue(cx - 1, cy);
+      enqueue(cx, cy + 1);
+      enqueue(cx, cy - 1);
     }
   }
   
