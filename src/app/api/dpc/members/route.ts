@@ -75,3 +75,27 @@ export async function POST(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.role !== "DPC") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const pacId = searchParams.get("pacId");
+
+    if (!pacId) {
+      return NextResponse.json({ error: "Missing pacId parameter" }, { status: 400 });
+    }
+
+    await prisma.member.deleteMany({
+      where: { pacId },
+    });
+
+    return NextResponse.json({ message: "Successfully deleted all members for this PAC" });
+  } catch (error) {
+    console.error("Error deleting members:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

@@ -27,6 +27,7 @@ export default function MembersPage() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMember, setViewMember] = useState<Member | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -80,13 +81,8 @@ export default function MembersPage() {
                   <th>NIK</th>
                   <th>No HP</th>
                   <th>JK</th>
-                  <th>TTL</th>
-                  <th>Status Kawin</th>
-                  <th>Pekerjaan</th>
-                  <th>Alamat</th>
-                  <th>Kelurahan</th>
-                  <th>Kecamatan</th>
                   <th style={{ textAlign: "center" }}>Verifikasi</th>
+                  <th style={{ textAlign: "center" }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,12 +94,6 @@ export default function MembersPage() {
                     <td>{m.nik || "-"}</td>
                     <td>{m.phone || "-"}</td>
                     <td>{m.gender || "-"}</td>
-                    <td>{m.birthPlace ? m.birthPlace + ", " : ""}{m.birthDate || "-"}</td>
-                    <td>{m.maritalStatus || "-"}</td>
-                    <td>{m.jobStatus || "-"}</td>
-                    <td>{m.address || "-"}</td>
-                    <td>{m.village || "-"}</td>
-                    <td>{m.subDistrict || "-"}</td>
                     <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                       <input 
                         type="checkbox" 
@@ -113,6 +103,24 @@ export default function MembersPage() {
                         title="Verifikasi kebenaran data ini"
                       />
                     </td>
+                    <td style={{ textAlign: "center" }}>
+                      <button 
+                        onClick={() => setViewMember(m)}
+                        style={{
+                          padding: "0.35rem 0.75rem",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(100,149,237,0.3)",
+                          background: "rgba(100,149,237,0.15)",
+                          color: "#6495ed",
+                          cursor: "pointer",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        View
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -120,6 +128,64 @@ export default function MembersPage() {
           </div>
         )}
       </div>
+
+      {/* Modal View Detail */}
+      {viewMember && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)",
+          display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,
+          padding: "1rem"
+        }}>
+          <div style={{
+            background: "#1e1e24", border: "1px solid rgba(255,255,255,0.1)",
+            padding: "2rem", borderRadius: "16px", width: "100%", maxWidth: "600px",
+            maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+          }}>
+            <h2 style={{ fontSize: "1.5rem", marginBottom: "1.5rem", color: "#f0f0f0", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "1rem" }}>
+              Detail Anggota: {viewMember.name}
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "1rem", fontSize: "0.95rem", color: "#ddd" }}>
+              <div style={{ color: "#aaa" }}>Nomor Urut</div><div>: {viewMember.noUrut || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nomor KTA</div><div>: {viewMember.nomorKta || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nama Lengkap</div><div style={{ fontWeight: 600, color: "#fff" }}>: {viewMember.name}</div>
+              <div style={{ color: "#aaa" }}>NIK</div><div>: {viewMember.nik || "-"}</div>
+              <div style={{ color: "#aaa" }}>Kontak / No HP</div><div>: {viewMember.phone || "-"}</div>
+              <div style={{ color: "#aaa" }}>Jenis Kelamin</div><div>: {viewMember.gender || "-"}</div>
+              <div style={{ color: "#aaa" }}>Tempat, Tgl Lahir</div><div>: {viewMember.birthPlace ? viewMember.birthPlace + ", " : ""}{viewMember.birthDate || "-"}</div>
+              <div style={{ color: "#aaa" }}>Status Perkawinan</div><div>: {viewMember.maritalStatus || "-"}</div>
+              <div style={{ color: "#aaa" }}>Status Pekerjaan</div><div>: {viewMember.jobStatus || "-"}</div>
+              <div style={{ color: "#aaa" }}>Alamat Lengkap</div><div>: {viewMember.address || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nama Kelurahan</div><div>: {viewMember.village || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nama Kecamatan</div><div>: {viewMember.subDistrict || "-"}</div>
+              <div style={{ color: "#aaa" }}>Status Verifikasi</div>
+              <div>: 
+                <span style={{ marginLeft: "0.5rem", padding: "0.2rem 0.5rem", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 600, background: viewMember.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: viewMember.isVerified ? "#2ed573" : "#ff4757" }}>
+                  {viewMember.isVerified ? "Terverifikasi" : "Belum"}
+                </span>
+              </div>
+            </div>
+            <div style={{ marginTop: "2rem", textAlign: "right" }}>
+              <button 
+                onClick={() => setViewMember(null)} 
+                style={{
+                  padding: "0.6rem 1.5rem",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "linear-gradient(135deg, #D4AF37, #b8962e)",
+                  color: "#1a1a1a",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

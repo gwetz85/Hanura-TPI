@@ -32,6 +32,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
   const [uploading, setUploading] = useState(false);
   const [filterPac, setFilterPac] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
+  const [viewMember, setViewMember] = useState<Member | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialForm = {
@@ -52,7 +53,6 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
       const url = editId ? `/api/dpc/members/${editId}` : "/api/dpc/members";
       const method = editId ? "PUT" : "POST";
       
-      // Auto verify for manual input as requested
       const payload = { ...formData, isVerified: true };
 
       const res = await fetch(url, {
@@ -99,6 +99,21 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
     try {
       const res = await fetch(`/api/dpc/members/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus");
+      router.refresh();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!filterPac) return;
+    const pacName = pacs.find(p => p.id === filterPac)?.name;
+    if (!confirm(`PERINGATAN! Anda yakin ingin menghapus SELURUH data anggota untuk ${pacName}? Aksi ini tidak dapat dibatalkan.`)) return;
+    
+    try {
+      const res = await fetch(`/api/dpc/members?pacId=${filterPac}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Gagal menghapus semua data");
+      alert("Seluruh data anggota PAC tersebut telah dihapus.");
       router.refresh();
     } catch (err: any) {
       alert(err.message);
@@ -180,6 +195,12 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
               {pacs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             
+            {filterPac && (
+              <button className={styles.btnReject} onClick={handleDeleteAll}>
+                Hapus Semua Data PAC Ini
+              </button>
+            )}
+
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <input 
                 type="file" 
@@ -220,14 +241,8 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                   <th>NIK</th>
                   <th>No HP</th>
                   <th>JK</th>
-                  <th>TTL</th>
-                  <th>Status Kawin</th>
-                  <th>Pekerjaan</th>
-                  <th>Alamat</th>
-                  <th>Kelurahan</th>
-                  <th>Kecamatan</th>
                   <th>Verifikasi</th>
-                  <th>Aksi</th>
+                  <th style={{ textAlign: "right" }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -240,19 +255,14 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
                     <td>{m.nik || "-"}</td>
                     <td>{m.phone || "-"}</td>
                     <td>{m.gender || "-"}</td>
-                    <td>{m.birthPlace ? m.birthPlace + ", " : ""}{m.birthDate || "-"}</td>
-                    <td>{m.maritalStatus || "-"}</td>
-                    <td>{m.jobStatus || "-"}</td>
-                    <td>{m.address || "-"}</td>
-                    <td>{m.village || "-"}</td>
-                    <td>{m.subDistrict || "-"}</td>
                     <td>
                       <span className={styles.badge} style={{ background: m.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: m.isVerified ? "#2ed573" : "#ff4757" }}>
                         {m.isVerified ? "Terverifikasi" : "Belum"}
                       </span>
                     </td>
-                    <td>
-                      <button className={styles.btnApprove} onClick={() => handleEdit(m)} style={{ marginBottom: "4px" }}>Edit</button>
+                    <td style={{ textAlign: "right" }}>
+                      <button className={styles.btnApprove} onClick={() => setViewMember(m)} style={{ marginRight: "4px", background: "rgba(100,149,237,0.15)", color: "#6495ed", border: "1px solid rgba(100,149,237,0.3)" }}>View</button>
+                      <button className={styles.btnApprove} onClick={() => handleEdit(m)} style={{ marginRight: "4px" }}>Edit</button>
                       <button className={styles.btnReject} onClick={() => handleDelete(m.id)}>Hapus</button>
                     </td>
                   </tr>
@@ -263,7 +273,50 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
         )}
       </div>
 
-      {/* Modal Input Anggota */}
+      {/* Modal View Detail */}
+      {viewMember && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)",
+          display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,
+          padding: "1rem"
+        }}>
+          <div style={{
+            background: "#1e1e24", border: "1px solid rgba(255,255,255,0.1)",
+            padding: "2rem", borderRadius: "16px", width: "100%", maxWidth: "600px",
+            maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+          }}>
+            <h2 style={{ fontSize: "1.5rem", marginBottom: "1.5rem", color: "#f0f0f0", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "1rem" }}>
+              Detail Anggota: {viewMember.name}
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "1rem", fontSize: "0.95rem", color: "#ddd" }}>
+              <div style={{ color: "#aaa" }}>Nomor Urut</div><div>: {viewMember.noUrut || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nomor KTA</div><div>: {viewMember.nomorKta || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nama Lengkap</div><div style={{ fontWeight: 600, color: "#fff" }}>: {viewMember.name}</div>
+              <div style={{ color: "#aaa" }}>NIK</div><div>: {viewMember.nik || "-"}</div>
+              <div style={{ color: "#aaa" }}>Kontak / No HP</div><div>: {viewMember.phone || "-"}</div>
+              <div style={{ color: "#aaa" }}>Jenis Kelamin</div><div>: {viewMember.gender || "-"}</div>
+              <div style={{ color: "#aaa" }}>Tempat, Tgl Lahir</div><div>: {viewMember.birthPlace ? viewMember.birthPlace + ", " : ""}{viewMember.birthDate || "-"}</div>
+              <div style={{ color: "#aaa" }}>Status Perkawinan</div><div>: {viewMember.maritalStatus || "-"}</div>
+              <div style={{ color: "#aaa" }}>Status Pekerjaan</div><div>: {viewMember.jobStatus || "-"}</div>
+              <div style={{ color: "#aaa" }}>Alamat Lengkap</div><div>: {viewMember.address || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nama Kelurahan</div><div>: {viewMember.village || "-"}</div>
+              <div style={{ color: "#aaa" }}>Nama Kecamatan</div><div>: {viewMember.subDistrict || "-"}</div>
+              <div style={{ color: "#aaa" }}>Status Verifikasi</div>
+              <div>: 
+                <span style={{ marginLeft: "0.5rem", padding: "0.2rem 0.5rem", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 600, background: viewMember.isVerified ? "rgba(46,213,115,0.15)" : "rgba(255,71,87,0.15)", color: viewMember.isVerified ? "#2ed573" : "#ff4757" }}>
+                  {viewMember.isVerified ? "Terverifikasi" : "Belum"}
+                </span>
+              </div>
+            </div>
+            <div style={{ marginTop: "2rem", textAlign: "right" }}>
+              <button onClick={() => setViewMember(null)} className={styles.btnSave}>Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Input/Edit Anggota */}
       {showModal && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -280,6 +333,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
               {editId ? "Edit Anggota" : "Input Anggota Manual"}
             </h2>
             <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+              {/* Form fields stay the same */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Pilih PAC</label>
                 <select value={formData.pacId} onChange={(e) => setFormData({ ...formData, pacId: e.target.value })} className={styles.replyInput} required>
