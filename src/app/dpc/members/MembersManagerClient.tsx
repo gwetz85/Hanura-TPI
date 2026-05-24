@@ -143,7 +143,7 @@ export default function MembersManagerClient({ members, pacs }: { members: Membe
         const payload = data.map((row: any) => ({
           pacId: filterPac,
           noUrut: row["Nomor urut"] || row["No"] || null,
-          nomorKta: row["Nomor KTA"]?.toString() || null,
+          nomorKta: row["Nomor KTA"]?.toString() || row["No. KTA"]?.toString() || row["No KTA"]?.toString() || row["NO. KTA"]?.toString() || row["NO KTA"]?.toString() || null,
           name: row["Nama"] || row["Name"] || "Tanpa Nama",
           nik: row["NIK"]?.toString() || null,
           phone: row["Kontak"]?.toString() || null,
