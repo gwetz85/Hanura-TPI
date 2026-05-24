@@ -29,9 +29,11 @@ interface Props {
   pacUsers: PacUser[];
   memberCountMap: Record<string, number>;
   totalMembers: number;
+  maleCount: number;
+  femaleCount: number;
 }
 
-export default function DpcDashboardClient({ userName, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers }: Props) {
+export default function DpcDashboardClient({ userName, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers, maleCount, femaleCount }: Props) {
   const [selectedPac, setSelectedPac] = useState<{ id: string; name: string } | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,6 +107,33 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
         <div className={styles.statCard}>
           <div className={styles.statNum}>{totalMembers}</div>
           <div className={styles.statLabel}>Total Anggota</div>
+        </div>
+      </div>
+
+      {/* Target & Gender Analysis Grid */}
+      <div className={styles.sectionHeader} style={{ marginTop: "2.5rem" }}>
+        <h2 className={styles.sectionTitle}>🎯 Analisis & Target Anggota</h2>
+        <span className={styles.sectionSub}>Target DPC: 480 Anggota</span>
+      </div>
+
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard} style={{ borderLeft: "4px solid #f093fb" }}>
+          <div className={styles.statNum} style={{ color: "#f093fb" }}>{femaleCount}</div>
+          <div className={styles.statLabel}>Anggota Perempuan (P)</div>
+        </div>
+        <div className={styles.statCard} style={{ borderLeft: "4px solid #4facfe" }}>
+          <div className={styles.statNum} style={{ color: "#4facfe" }}>{maleCount}</div>
+          <div className={styles.statLabel}>Anggota Laki-Laki (L)</div>
+        </div>
+        <div className={styles.statCard} style={{ borderLeft: "4px solid #D4AF37" }}>
+          <div className={styles.statNum} style={{ color: "#D4AF37" }}>480</div>
+          <div className={styles.statLabel}>Target Anggota</div>
+        </div>
+        <div className={styles.statCard} style={{ borderLeft: `4px solid ${(480 - totalMembers) > 0 ? "#ff4757" : "#2ed573"}` }}>
+          <div className={styles.statNum} style={{ color: (480 - totalMembers) > 0 ? "#ff4757" : "#2ed573" }}>
+            {Math.max(0, 480 - totalMembers)}
+          </div>
+          <div className={styles.statLabel}>Kekurangan Target</div>
         </div>
       </div>
 
