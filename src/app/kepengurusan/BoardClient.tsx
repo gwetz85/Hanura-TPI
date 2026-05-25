@@ -166,6 +166,10 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
                   padding: "2rem",
                   cursor: "pointer",
                   textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
                   transition: "all 0.3s ease",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
                 }}
@@ -199,6 +203,10 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
                   padding: "2rem",
                   cursor: "pointer",
                   textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
                   transition: "all 0.3s ease",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
                 }}
