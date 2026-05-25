@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import EventCountdown from "@/components/EventCountdown";
+import GlobalLogo from "@/components/GlobalLogo";
 import prisma from "@/lib/prisma";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -54,13 +55,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         `}</style>
       </head>
       <body>
-        {/* Transparent logo fixed to top‑right on every page */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo.png"
-          alt="Logo Hanura TPI"
-          className="app-logo"
-        />
+        {/* Logo tersembunyi di halaman login */}
+        <GlobalLogo />
         <SessionWrapper>
           <EventCountdown initialEvent={activeEvent} />
           {children}

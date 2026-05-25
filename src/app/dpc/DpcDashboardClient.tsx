@@ -75,6 +75,7 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
   const getPacName = (pacId: string) => pacUsers.find((p) => p.id === pacId)?.name ?? "-";
 
   const menus = [
+    { icon: "✉️", title: "SURAT DPC", desc: "Kelola pencatatan Surat Masuk dan Surat Keluar DPC.", href: "/dpc/surat" },
     { icon: "🪪", title: "Kelola Pengajuan KTA", desc: "Setujui atau tolak pengajuan KTA dari semua PAC.", href: "/dpc/kta" },
     { icon: "📋", title: "Kelola Usulan Kegiatan", desc: "Balas usulan kegiatan dari semua PAC.", href: "/dpc/activity" },
     { icon: "👥", title: "Upload Daftar Anggota", desc: "Upload daftar anggota resmi untuk masing-masing PAC.", href: "/dpc/members" },
