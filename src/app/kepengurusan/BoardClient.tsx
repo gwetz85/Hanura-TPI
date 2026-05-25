@@ -264,10 +264,12 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
                     <option value="" disabled>Pilih Tingkatan</option>
                     <option value="DPD">DPD</option>
                     <option value="DPC">DPC</option>
-                    <option value="PAC BARAT">PAC BARAT</option>
-                    <option value="PAC KOTA">PAC KOTA</option>
-                    <option value="PAC TIMUR">PAC TIMUR</option>
-                    <option value="PAC BUKIT BESTARI">PAC BUKIT BESTARI</option>
+                    <optgroup label="PAC">
+                      <option value="PAC BARAT">PAC BARAT</option>
+                      <option value="PAC KOTA">PAC KOTA</option>
+                      <option value="PAC TIMUR">PAC TIMUR</option>
+                      <option value="PAC BUKIT BESTARI">PAC BUKIT BESTARI</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div>
@@ -281,20 +283,6 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
                 <div>
                   <label className={styles.formLabel}>Nomor SK</label>
                   <input className={styles.formInput} value={formData.nomorSk} onChange={e => setFormData({...formData, nomorSk: e.target.value})} placeholder="Opsional" />
-                </div>
-                <div style={{ display: "flex", gap: "1rem" }}>
-                  <div style={{ flex: 1 }}>
-                    <label className={styles.formLabel}>No. Anggota / KTA</label>
-                    <input className={styles.formInput} value={formData.ktaNumber} onChange={e => setFormData({...formData, ktaNumber: e.target.value})} placeholder="Opsional" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label className={styles.formLabel}>NIK</label>
-                    <input className={styles.formInput} value={formData.nik} onChange={e => setFormData({...formData, nik: e.target.value})} placeholder="Opsional" />
-                  </div>
-                </div>
-                <div>
-                  <label className={styles.formLabel}>URL Foto (Opsional)</label>
-                  <input className={styles.formInput} value={formData.photoUrl} onChange={e => setFormData({...formData, photoUrl: e.target.value})} placeholder="https://..." />
                 </div>
                 <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
                   <button type="button" className={styles.btnReject} onClick={() => setShowModal(false)} style={{ flex: 1 }}>Batal</button>
