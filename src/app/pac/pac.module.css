@@ -3,6 +3,9 @@
   min-height: 100vh;
   padding: 2.5rem;
   background: var(--bg-dark, #0f0f11);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .header {
