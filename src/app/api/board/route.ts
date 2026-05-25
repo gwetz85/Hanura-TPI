@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { level, position, name, ktaNumber, nik, photoUrl } = body;
+    const { level, position, name, ktaNumber, nik, nomorSk, photoUrl } = body;
 
     if (!level || !position || !name) {
       return NextResponse.json({ error: "Level, Jabatan, dan Nama wajib diisi" }, { status: 400 });
@@ -42,6 +42,7 @@ export async function POST(req: Request) {
         name,
         ktaNumber: ktaNumber || null,
         nik: nik || null,
+        nomorSk: nomorSk || null,
         photoUrl: photoUrl || null,
       }
     });

@@ -110,6 +110,7 @@ model BoardMember {
   name      String
   ktaNumber String?
   nik       String?
+  nomorSk   String?
   photoUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
