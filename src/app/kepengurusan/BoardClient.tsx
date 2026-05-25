@@ -147,7 +147,7 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
               {viewState === "VIEW_DATA" && `Daftar susunan pengurus ${selectedLevel}.`}
             </p>
           </div>
-          {isDpc && viewState === "VIEW_DATA" && !selectedLevel?.startsWith("PAC") && (
+          {isDpc && viewState === "SELECT_MAIN" && (
             <button className={styles.btnSave} onClick={openAddModal}>+ TAMBAH PENGURUS</button>
           )}
         </div>
