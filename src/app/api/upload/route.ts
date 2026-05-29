@@ -10,12 +10,13 @@ export async function POST(request: Request) {
   }
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const uploadedFile = file as any;
-  const filename = `${Date.now()}_${uploadedFile.name || "uploaded_file"}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await fs.mkdir(uploadDir, { recursive: true });
-  const uploadPath = path.join(uploadDir, filename);
-  await fs.writeFile(uploadPath, buffer);
-  const urlPath = `/uploads/${filename}`;
-  return NextResponse.json({ url: urlPath });
+  
+  // Get MIME type
+  const mimeType = file.type || "application/octet-stream";
+  
+  // Convert to Base64 Data URI
+  const base64 = buffer.toString("base64");
+  const dataUri = `data:${mimeType};base64,${base64}`;
+  
+  return NextResponse.json({ url: dataUri });
 }
