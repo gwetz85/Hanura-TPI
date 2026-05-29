@@ -27,6 +27,8 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
 
   const [skUrl, setSkUrl] = useState<string | null>(null);
   const [uploadingSk, setUploadingSk] = useState(false);
+  const [showSkModal, setShowSkModal] = useState(false);
+  const [skPreviewUrl, setSkPreviewUrl] = useState<string | null>(null);
 
   const initialForm = { level: "", position: "", name: "", ktaNumber: "", nik: "", nomorSk: "", photoUrl: "" };
   const [formData, setFormData] = useState(initialForm);
@@ -119,7 +121,7 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
     }
   };
 
-  const handleDownloadSk = () => {
+  const handlePreviewSk = () => {
     if (!skUrl) return;
     try {
       if (skUrl.startsWith("data:")) {
@@ -133,24 +135,24 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
         }
         const blob = new Blob([u8arr], { type: mime });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        // extension heuristic
-        let ext = "pdf";
-        if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
-        else if (mime.includes("png")) ext = "png";
-        a.download = `SK_${selectedLevel}.${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setSkPreviewUrl(url);
+        setShowSkModal(true);
       } else {
-        window.open(skUrl, "_blank");
+        setSkPreviewUrl(skUrl);
+        setShowSkModal(true);
       }
     } catch (err) {
       console.error(err);
       alert("Gagal membuka file. Pastikan file valid.");
     }
+  };
+
+  const closeSkModal = () => {
+    setShowSkModal(false);
+    if (skPreviewUrl && skPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(skPreviewUrl);
+    }
+    setSkPreviewUrl(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -248,7 +250,7 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
           {viewState === "VIEW_DATA" && (
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
               {skUrl && (
-                <button onClick={handleDownloadSk} className={styles.btnApprove} style={{ textDecoration: "none", display: "inline-block", border: "none", cursor: "pointer", fontSize: "1rem" }}>
+                <button onClick={handlePreviewSk} className={styles.btnApprove} style={{ textDecoration: "none", display: "inline-block", border: "none", cursor: "pointer", fontSize: "1rem" }}>
                   📄 Lihat / Download SK
                 </button>
               )}
@@ -412,6 +414,24 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
                   <button type="submit" className={styles.btnSave} disabled={loading} style={{ flex: 1 }}>{loading ? "Menyimpan..." : "Simpan"}</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal for SK Preview */}
+        {showSkModal && skPreviewUrl && (
+          <div className={styles.modalOverlay} onClick={closeSkModal} style={{ zIndex: 1000, padding: "2rem" }}>
+            <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ width: "90%", maxWidth: "1000px", height: "85vh", display: "flex", flexDirection: "column", padding: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <h2 style={{ margin: 0, color: "#D4AF37" }}>Preview SK - {selectedLevel}</h2>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <a href={skPreviewUrl} download={`SK_${selectedLevel}`} className={styles.btnApprove} style={{ textDecoration: "none", padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>⬇️ Download File</a>
+                  <button onClick={closeSkModal} className={styles.btnReject} style={{ padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>✖ Tutup</button>
+                </div>
+              </div>
+              <div style={{ flex: 1, backgroundColor: "#fff", borderRadius: "8px", overflow: "hidden" }}>
+                <iframe src={skPreviewUrl} width="100%" height="100%" style={{ border: "none" }} title="Preview SK" />
+              </div>
             </div>
           </div>
         )}
