@@ -102,7 +102,14 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Gagal menyimpan data");
+      if (!res.ok) {
+        let msg = "Gagal menyimpan data";
+        try {
+          const errData = await res.json();
+          if (errData.error) msg = errData.error;
+        } catch(e) {}
+        throw new Error(msg);
+      }
       setFormData(initialForm);
       setEditId(null);
       setShowModal(false);
