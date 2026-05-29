@@ -9,6 +9,7 @@ interface SuratMasuk {
   nomorSurat: string;
   instansiPengirim: string;
   perihal: string;
+  fileUrl?: string | null;
 }
 
 interface SuratKeluar {
@@ -17,6 +18,7 @@ interface SuratKeluar {
   nomorSurat: string;
   penerima: string;
   perihal: string;
+  fileUrl?: string | null;
 }
 
 interface Props {
@@ -32,6 +34,15 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // File Upload State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState("");
+
+  // Preview Modal State
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState("");
+
   // Form state
   const [tanggalSurat, setTanggalSurat] = useState("");
   const [nomorSurat, setNomorSurat] = useState("");
@@ -43,7 +54,35 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
     setNomorSurat("");
     setPihakLain("");
     setPerihal("");
+    setSelectedFile(null);
+    setUploadProgress("");
     setIsModalOpen(true);
+  };
+
+  const handlePreviewSurat = (url: string, title: string) => {
+    if (!url) return;
+    try {
+      if (url.startsWith("data:")) {
+        const arr = url.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || "application/pdf";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+        const blob = new Blob([u8arr], { type: mime });
+        setPreviewUrl(URL.createObjectURL(blob));
+      } else {
+        setPreviewUrl(url);
+      }
+      setPreviewTitle(title);
+      setShowPreviewModal(true);
+    } catch { alert("Gagal membuka berkas."); }
+  };
+
+  const closePreviewModal = () => {
+    setShowPreviewModal(false);
+    if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +90,18 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
     setIsLoading(true);
 
     try {
+      let fileUrl = "";
+      if (selectedFile) {
+        setUploadProgress("Mengupload file surat...");
+        const fd = new FormData();
+        fd.append("file", selectedFile);
+        const resUpload = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!resUpload.ok) throw new Error("Gagal mengupload berkas surat");
+        const dataUpload = await resUpload.json();
+        fileUrl = dataUpload.url;
+        setUploadProgress("Upload sukses!");
+      }
+
       if (activeTab === "masuk") {
         const res = await fetch("/api/surat/masuk", {
           method: "POST",
@@ -60,6 +111,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
             nomorSurat,
             instansiPengirim: pihakLain,
             perihal,
+            fileUrl,
           }),
         });
 
@@ -75,6 +127,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
             nomorSurat,
             penerima: pihakLain,
             perihal,
+            fileUrl,
           }),
         });
 
@@ -136,6 +189,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                     <th>Nomor Surat</th>
                     <th>Instansi Pengirim</th>
                     <th>Perihal</th>
+                    <th style={{ textAlign: "center" }}>Lampiran</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -145,6 +199,19 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                       <td style={{ fontWeight: 600 }}>{s.nomorSurat}</td>
                       <td>{s.instansiPengirim}</td>
                       <td>{s.perihal}</td>
+                      <td style={{ textAlign: "center" }}>
+                        {s.fileUrl ? (
+                          <button 
+                            onClick={() => handlePreviewSurat(s.fileUrl!, s.nomorSurat)}
+                            className={crudStyles.btnApprove}
+                            style={{ fontSize: "0.85rem", border: "none", cursor: "pointer", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600 }}
+                          >
+                            📄 Lihat Surat
+                          </button>
+                        ) : (
+                          <span style={{ color: "#555", fontSize: "0.85rem" }}>Tidak ada file</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -165,6 +232,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                     <th>Nomor Surat</th>
                     <th>Penerima</th>
                     <th>Perihal</th>
+                    <th style={{ textAlign: "center" }}>Lampiran</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -174,6 +242,19 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                       <td style={{ fontWeight: 600 }}>{s.nomorSurat}</td>
                       <td>{s.penerima}</td>
                       <td>{s.perihal}</td>
+                      <td style={{ textAlign: "center" }}>
+                        {s.fileUrl ? (
+                          <button 
+                            onClick={() => handlePreviewSurat(s.fileUrl!, s.nomorSurat)}
+                            className={crudStyles.btnApprove}
+                            style={{ fontSize: "0.85rem", border: "none", cursor: "pointer", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600 }}
+                          >
+                            📄 Lihat Surat
+                          </button>
+                        ) : (
+                          <span style={{ color: "#555", fontSize: "0.85rem" }}>Tidak ada file</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -241,6 +322,21 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                 />
               </div>
 
+              <div className={styles.formGroup}>
+                <label className={crudStyles.formLabel}>File PDF Surat (Opsional)</label>
+                <input 
+                  type="file" 
+                  accept="application/pdf,image/*"
+                  className={crudStyles.formInput} 
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                />
+                {uploadProgress && (
+                  <span style={{ fontSize: "0.85rem", color: "#D4AF37", marginTop: "0.35rem", display: "block" }}>
+                    {uploadProgress}
+                  </span>
+                )}
+              </div>
+
               <div className={styles.modalActions}>
                 <button type="button" className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>
                   Batal
@@ -250,6 +346,24 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Preview Surat */}
+      {showPreviewModal && previewUrl && (
+        <div className={crudStyles.modalOverlay} onClick={closePreviewModal} style={{ zIndex: 999999, padding: "1.5rem" }}>
+          <div className={crudStyles.modalContent} onClick={e => e.stopPropagation()} style={{ width: "95%", maxWidth: "1100px", height: "90vh", display: "flex", flexDirection: "column", padding: "1.5rem 2rem", maxHeight: "calc(100vh - 3rem)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem", flexShrink: 0 }}>
+              <h2 style={{ margin: 0, color: "#D4AF37", fontSize: "1.4rem" }}>Pratinjau Surat — {previewTitle}</h2>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <a href={previewUrl} download={`Surat_${previewTitle.replace(/\//g, "_")}`} className={crudStyles.btnApprove} style={{ textDecoration: "none", padding: "0.6rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "1rem" }}>⬇️ Download</a>
+                <button onClick={closePreviewModal} className={crudStyles.btnReject} style={{ padding: "0.6rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "1rem" }}>✖ Tutup</button>
+              </div>
+            </div>
+            <div style={{ flex: 1, backgroundColor: "#fff", borderRadius: "10px", overflow: "hidden", minHeight: 0 }}>
+              <iframe src={previewUrl} width="100%" height="100%" style={{ border: "none" }} title="Preview Surat" />
+            </div>
           </div>
         </div>
       )}

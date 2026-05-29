@@ -123,6 +123,7 @@ model IncomingLetter {
   nomorSurat       String
   instansiPengirim String
   perihal          String
+  fileUrl          String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -133,6 +134,7 @@ model OutgoingLetter {
   nomorSurat       String
   penerima         String
   perihal          String
+  fileUrl          String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { tanggalSurat, nomorSurat, instansiPengirim, perihal } = await request.json();
+    const { tanggalSurat, nomorSurat, instansiPengirim, perihal, fileUrl } = await request.json();
 
     if (!tanggalSurat || !nomorSurat || !instansiPengirim || !perihal) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -40,6 +40,7 @@ export async function POST(request: Request) {
         nomorSurat,
         instansiPengirim,
         perihal,
+        fileUrl: fileUrl || null,
       },
     });
 
