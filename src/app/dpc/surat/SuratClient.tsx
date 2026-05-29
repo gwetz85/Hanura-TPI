@@ -43,6 +43,11 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
 
+  // Edit / Delete State
+  const [editMode, setEditMode] = useState(false);
+  const [editingLetterId, setEditingLetterId] = useState<string | null>(null);
+  const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
+
   // Form state
   const [tanggalSurat, setTanggalSurat] = useState("");
   const [nomorSurat, setNomorSurat] = useState("");
@@ -54,9 +59,42 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
     setNomorSurat("");
     setPihakLain("");
     setPerihal("");
+    setExistingFileUrl(null);
     setSelectedFile(null);
     setUploadProgress("");
+    setEditMode(false);
+    setEditingLetterId(null);
     setIsModalOpen(true);
+  };
+
+  const openEditModal = (s: SuratMasuk | SuratKeluar) => {
+    setTanggalSurat(s.tanggalSurat);
+    setNomorSurat(s.nomorSurat);
+    setPihakLain("instansiPengirim" in s ? s.instansiPengirim : s.penerima);
+    setPerihal(s.perihal);
+    setExistingFileUrl(s.fileUrl || null);
+    setSelectedFile(null);
+    setUploadProgress("");
+    setEditMode(true);
+    setEditingLetterId(s.id);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus surat ini?")) return;
+    try {
+      const res = await fetch(`/api/surat/${activeTab}/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Gagal menghapus surat");
+      if (activeTab === "masuk") {
+        setSuratMasuk(suratMasuk.filter(item => item.id !== id));
+      } else {
+        setSuratKeluar(suratKeluar.filter(item => item.id !== id));
+      }
+    } catch (err: any) {
+      alert(err.message);
+    }
   };
 
   const handlePreviewSurat = (url: string, title: string) => {
@@ -90,7 +128,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
     setIsLoading(true);
 
     try {
-      let fileUrl = "";
+      let fileUrl = existingFileUrl || "";
       if (selectedFile) {
         setUploadProgress("Mengupload file surat...");
         const fd = new FormData();
@@ -102,38 +140,74 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
         setUploadProgress("Upload sukses!");
       }
 
-      if (activeTab === "masuk") {
-        const res = await fetch("/api/surat/masuk", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tanggalSurat,
-            nomorSurat,
-            instansiPengirim: pihakLain,
-            perihal,
-            fileUrl,
-          }),
-        });
+      if (editMode && editingLetterId) {
+        if (activeTab === "masuk") {
+          const res = await fetch(`/api/surat/masuk/${editingLetterId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tanggalSurat,
+              nomorSurat,
+              instansiPengirim: pihakLain,
+              perihal,
+              fileUrl,
+            }),
+          });
 
-        if (!res.ok) throw new Error("Gagal menyimpan surat masuk");
-        const newSurat = await res.json();
-        setSuratMasuk([newSurat, ...suratMasuk]);
+          if (!res.ok) throw new Error("Gagal mengupdate surat masuk");
+          const updatedSurat = await res.json();
+          setSuratMasuk(suratMasuk.map(item => item.id === editingLetterId ? updatedSurat : item));
+        } else {
+          const res = await fetch(`/api/surat/keluar/${editingLetterId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tanggalSurat,
+              nomorSurat,
+              penerima: pihakLain,
+              perihal,
+              fileUrl,
+            }),
+          });
+
+          if (!res.ok) throw new Error("Gagal mengupdate surat keluar");
+          const updatedSurat = await res.json();
+          setSuratKeluar(suratKeluar.map(item => item.id === editingLetterId ? updatedSurat : item));
+        }
       } else {
-        const res = await fetch("/api/surat/keluar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tanggalSurat,
-            nomorSurat,
-            penerima: pihakLain,
-            perihal,
-            fileUrl,
-          }),
-        });
+        if (activeTab === "masuk") {
+          const res = await fetch("/api/surat/masuk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tanggalSurat,
+              nomorSurat,
+              instansiPengirim: pihakLain,
+              perihal,
+              fileUrl,
+            }),
+          });
 
-        if (!res.ok) throw new Error("Gagal menyimpan surat keluar");
-        const newSurat = await res.json();
-        setSuratKeluar([newSurat, ...suratKeluar]);
+          if (!res.ok) throw new Error("Gagal menyimpan surat masuk");
+          const newSurat = await res.json();
+          setSuratMasuk([newSurat, ...suratMasuk]);
+        } else {
+          const res = await fetch("/api/surat/keluar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tanggalSurat,
+              nomorSurat,
+              penerima: pihakLain,
+              perihal,
+              fileUrl,
+            }),
+          });
+
+          if (!res.ok) throw new Error("Gagal menyimpan surat keluar");
+          const newSurat = await res.json();
+          setSuratKeluar([newSurat, ...suratKeluar]);
+        }
       }
 
       setIsModalOpen(false);
@@ -189,7 +263,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                     <th>Nomor Surat</th>
                     <th>Instansi Pengirim</th>
                     <th>Perihal</th>
-                    <th style={{ textAlign: "center" }}>Lampiran</th>
+                    <th style={{ textAlign: "center" }}>Aksi / Lampiran</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,17 +274,33 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                       <td>{s.instansiPengirim}</td>
                       <td>{s.perihal}</td>
                       <td style={{ textAlign: "center" }}>
-                        {s.fileUrl ? (
+                        <div style={{ display: "flex", gap: "0.4rem", justifyContent: "center", alignItems: "center" }}>
+                          {s.fileUrl ? (
+                            <button 
+                              onClick={() => handlePreviewSurat(s.fileUrl!, s.nomorSurat)}
+                              className={crudStyles.btnApprove}
+                              style={{ fontSize: "0.85rem", border: "none", cursor: "pointer", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600 }}
+                            >
+                              📄 Lihat
+                            </button>
+                          ) : (
+                            <span style={{ color: "#555", fontSize: "0.85rem", marginRight: "0.2rem" }}>Tidak ada file</span>
+                          )}
                           <button 
-                            onClick={() => handlePreviewSurat(s.fileUrl!, s.nomorSurat)}
-                            className={crudStyles.btnApprove}
-                            style={{ fontSize: "0.85rem", border: "none", cursor: "pointer", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600 }}
+                            onClick={() => openEditModal(s)}
+                            className={crudStyles.btnSave}
+                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600, border: "none" }}
                           >
-                            📄 Lihat Surat
+                            ✏️ Edit
                           </button>
-                        ) : (
-                          <span style={{ color: "#555", fontSize: "0.85rem" }}>Tidak ada file</span>
-                        )}
+                          <button 
+                            onClick={() => handleDelete(s.id)}
+                            className={crudStyles.btnReject}
+                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600, border: "none" }}
+                          >
+                            🗑️ Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -232,7 +322,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                     <th>Nomor Surat</th>
                     <th>Penerima</th>
                     <th>Perihal</th>
-                    <th style={{ textAlign: "center" }}>Lampiran</th>
+                    <th style={{ textAlign: "center" }}>Aksi / Lampiran</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,17 +333,33 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                       <td>{s.penerima}</td>
                       <td>{s.perihal}</td>
                       <td style={{ textAlign: "center" }}>
-                        {s.fileUrl ? (
+                        <div style={{ display: "flex", gap: "0.4rem", justifyContent: "center", alignItems: "center" }}>
+                          {s.fileUrl ? (
+                            <button 
+                              onClick={() => handlePreviewSurat(s.fileUrl!, s.nomorSurat)}
+                              className={crudStyles.btnApprove}
+                              style={{ fontSize: "0.85rem", border: "none", cursor: "pointer", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600 }}
+                            >
+                              📄 Lihat
+                            </button>
+                          ) : (
+                            <span style={{ color: "#555", fontSize: "0.85rem", marginRight: "0.2rem" }}>Tidak ada file</span>
+                          )}
                           <button 
-                            onClick={() => handlePreviewSurat(s.fileUrl!, s.nomorSurat)}
-                            className={crudStyles.btnApprove}
-                            style={{ fontSize: "0.85rem", border: "none", cursor: "pointer", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600 }}
+                            onClick={() => openEditModal(s)}
+                            className={crudStyles.btnSave}
+                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600, border: "none" }}
                           >
-                            📄 Lihat Surat
+                            ✏️ Edit
                           </button>
-                        ) : (
-                          <span style={{ color: "#555", fontSize: "0.85rem" }}>Tidak ada file</span>
-                        )}
+                          <button 
+                            onClick={() => handleDelete(s.id)}
+                            className={crudStyles.btnReject}
+                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.9rem", borderRadius: "8px", fontWeight: 600, border: "none" }}
+                          >
+                            🗑️ Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -268,7 +374,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
         <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Tambah Surat {activeTab === "masuk" ? "Masuk" : "Keluar"}</h3>
+              <h3 className={styles.modalTitle}>{editMode ? "Edit" : "Tambah"} Surat {activeTab === "masuk" ? "Masuk" : "Keluar"}</h3>
               <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             
@@ -330,6 +436,19 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
                   className={crudStyles.formInput} 
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                 />
+                {existingFileUrl && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.45rem" }}>
+                    <span style={{ fontSize: "0.85rem", color: "#2ed573", fontWeight: 600 }}>✓ Sudah ada lampiran</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setExistingFileUrl(null)}
+                      className={crudStyles.btnReject}
+                      style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "4px", border: "none", cursor: "pointer" }}
+                    >
+                      Hapus File
+                    </button>
+                  </div>
+                )}
                 {uploadProgress && (
                   <span style={{ fontSize: "0.85rem", color: "#D4AF37", marginTop: "0.35rem", display: "block" }}>
                     {uploadProgress}
