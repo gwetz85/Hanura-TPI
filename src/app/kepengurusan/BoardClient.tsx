@@ -119,6 +119,40 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
     }
   };
 
+  const handleDownloadSk = () => {
+    if (!skUrl) return;
+    try {
+      if (skUrl.startsWith("data:")) {
+        const arr = skUrl.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || "application/pdf";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        // extension heuristic
+        let ext = "pdf";
+        if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
+        else if (mime.includes("png")) ext = "png";
+        a.download = `SK_${selectedLevel}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        window.open(skUrl, "_blank");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Gagal membuka file. Pastikan file valid.");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -214,9 +248,9 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
           {viewState === "VIEW_DATA" && (
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
               {skUrl && (
-                <a href={skUrl} target="_blank" rel="noopener noreferrer" className={styles.btnApprove} style={{ textDecoration: "none", display: "inline-block" }}>
+                <button onClick={handleDownloadSk} className={styles.btnApprove} style={{ textDecoration: "none", display: "inline-block", border: "none", cursor: "pointer", fontSize: "1rem" }}>
                   📄 Lihat / Download SK
-                </a>
+                </button>
               )}
               {isDpc && (
                 <>
