@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import styles from "../dpc/crud.module.css";
-import { useRouter } from "next/navigation";
 
 interface BoardMember {
   id: string;
@@ -23,22 +22,14 @@ const LEVELS = [
   { key: "PAC BUKIT BESTARI", label: "PAC Bukit Bestari" },
 ];
 
-export default function BoardClient({ boardMembers: initialMembers, userRole }: { boardMembers: BoardMember[], userRole: string }) {
-  const router = useRouter();
+export default function BoardClient({ boardMembers: _initialMembers, userRole }: { boardMembers: BoardMember[], userRole: string }) {
   const isDpc = userRole === "DPC";
-  const [members, setMembers] = useState<BoardMember[]>(initialMembers);
-  const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
 
   const [skUrls, setSkUrls] = useState<Record<string, string | null>>({});
   const [uploadingSk, setUploadingSk] = useState<string | null>(null);
   const [showSkModal, setShowSkModal] = useState(false);
   const [skPreviewUrl, setSkPreviewUrl] = useState<string | null>(null);
   const [skPreviewLevel, setSkPreviewLevel] = useState<string>("");
-
-  const initialForm = { level: "", position: "", name: "", ktaNumber: "", nik: "", nomorSk: "", photoUrl: "" };
-  const [formData, setFormData] = useState(initialForm);
 
   const fetchAllSk = useCallback(async () => {
     const results: Record<string, string | null> = {};
@@ -58,59 +49,6 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
 
   useEffect(() => { fetchAllSk(); }, [fetchAllSk]);
 
-  const openAddModal = (level: string) => {
-    setEditId(null);
-    setFormData({ ...initialForm, level });
-    setShowModal(true);
-  };
-
-  const openEditModal = (member: BoardMember) => {
-    setEditId(member.id);
-    setFormData({ level: member.level, position: member.position, name: member.name, ktaNumber: member.ktaNumber || "", nik: member.nik || "", nomorSk: member.nomorSk || "", photoUrl: member.photoUrl || "" });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Yakin ingin menghapus data pengurus ini?")) return;
-    try {
-      const res = await fetch(`/api/board/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Gagal menghapus data");
-      setMembers(members.filter(m => m.id !== id));
-      router.refresh();
-    } catch (err: any) { alert(err.message); }
-  };
-
-  const handleDeleteAll = async (level: string) => {
-    if (!confirm(`Yakin ingin HAPUS SEMUA DATA pengurus ${level}?\nTindakan ini tidak dapat dibatalkan.`)) return;
-    try {
-      const res = await fetch(`/api/board/all?level=${encodeURIComponent(level)}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Gagal menghapus semua data");
-      setMembers(members.filter(m => m.level !== level));
-      router.refresh();
-    } catch (err: any) { alert(err.message); }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (editId) {
-        const res = await fetch(`/api/board/${editId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
-        if (!res.ok) throw new Error("Gagal mengupdate data");
-        const updated = await res.json();
-        setMembers(members.map(m => m.id === editId ? updated : m));
-      } else {
-        const res = await fetch("/api/board", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
-        if (!res.ok) throw new Error("Gagal menambah data");
-        const created = await res.json();
-        setMembers([...members, created]);
-      }
-      setShowModal(false);
-      router.refresh();
-    } catch (err: any) { alert(err.message); }
-    finally { setLoading(false); }
-  };
-
   const handleUploadSk = async (level: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -121,11 +59,28 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) throw new Error("Gagal mengupload file");
       const data = await res.json();
-      const resSk = await fetch("/api/board/sk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level, fileUrl: data.url }) });
+      const resSk = await fetch("/api/board/sk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level, fileUrl: data.url })
+      });
       if (!resSk.ok) throw new Error("Gagal menyimpan data SK");
       setSkUrls(prev => ({ ...prev, [level]: data.url }));
     } catch (err: any) { alert(err.message); }
     finally { setUploadingSk(null); e.target.value = ''; }
+  };
+
+  const handleDeleteSk = async (level: string) => {
+    if (!confirm(`Yakin ingin hapus SK untuk ${level}?`)) return;
+    try {
+      const res = await fetch("/api/board/sk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level, fileUrl: "" })
+      });
+      if (!res.ok) throw new Error("Gagal menghapus SK");
+      setSkUrls(prev => ({ ...prev, [level]: null }));
+    } catch (err: any) { alert(err.message); }
   };
 
   const handlePreviewSk = (level: string) => {
@@ -155,21 +110,16 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
     setSkPreviewUrl(null);
   };
 
-  const canEdit = (level: string) => isDpc && !level.startsWith("PAC");
-
-  // Build rows grouped by level
-  let globalNo = 0;
-
   return (
     <div className={styles.container} style={{ alignItems: "flex-start" }}>
-      <div className={styles.glassCard} style={{ maxWidth: "1200px", margin: "0 auto" }}>
+      <div className={styles.glassCard} style={{ maxWidth: "900px", margin: "0 auto" }}>
 
         <a href={isDpc ? "/dpc" : "/pac"} className={styles.backLink}>← Kembali ke Dashboard</a>
 
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Struktur Kepengurusan</h1>
-            <p style={{ color: "#a0a0a0", fontSize: "0.9rem", marginTop: "0.5rem" }}>Daftar lengkap susunan pengurus DPD, DPC, dan PAC.</p>
+            <p style={{ color: "#a0a0a0", fontSize: "0.9rem", marginTop: "0.5rem" }}>SK Kepengurusan DPD, DPC, dan PAC.</p>
           </div>
         </div>
 
@@ -177,138 +127,50 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
           <table className={styles.table}>
             <thead>
               <tr>
-                <th style={{ width: "40px" }}>No</th>
-                <th>Nama</th>
-                <th>Jabatan</th>
-                <th>Nomor SK</th>
-                {isDpc && <th style={{ width: "140px" }}>Aksi</th>}
+                <th style={{ width: "50px", textAlign: "center" }}>No</th>
+                <th>Tingkatan</th>
+                <th style={{ textAlign: "center" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {LEVELS.map((lvl) => {
-                const levelMembers = members.filter(m => m.level === lvl.key);
+              {LEVELS.map((lvl, idx) => {
                 const hasSk = !!skUrls[lvl.key];
                 const isUploading = uploadingSk === lvl.key;
 
                 return (
-                  <>
-                    {/* Level header row */}
-                    <tr key={`header-${lvl.key}`}>
-                      <td
-                        colSpan={isDpc ? 5 : 4}
-                        style={{
-                          background: "rgba(212,175,55,0.08)",
-                          borderBottom: "1px solid rgba(212,175,55,0.25)",
-                          padding: "0.75rem 1rem",
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                          <span style={{ fontWeight: 700, color: "#D4AF37", fontSize: "0.95rem" }}>
-                            {lvl.label}
-                            <span style={{ fontWeight: 400, color: "#888", fontSize: "0.8rem", marginLeft: "0.5rem" }}>
-                              ({levelMembers.length} pengurus)
-                            </span>
-                          </span>
-                          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  <tr key={lvl.key}>
+                    <td style={{ textAlign: "center", color: "#888", fontWeight: 600 }}>{idx + 1}</td>
+                    <td style={{ fontWeight: 600, fontSize: "0.95rem" }}>{lvl.label}</td>
+                    <td style={{ textAlign: "center" }}>
+                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap" }}>
+                        {hasSk ? (
+                          <button onClick={() => handlePreviewSk(lvl.key)} className={styles.btnApprove} style={{ fontSize: "0.8rem", border: "none", cursor: "pointer" }}>
+                            📄 Lihat SK
+                          </button>
+                        ) : (
+                          <span style={{ color: "#555", fontSize: "0.8rem", padding: "0.35rem 0.85rem" }}>Belum ada SK</span>
+                        )}
+                        {isDpc && (
+                          <>
+                            <label className={styles.btnSave} style={{ cursor: "pointer", fontSize: "0.8rem" }}>
+                              {isUploading ? "⏳ Uploading..." : "📤 Upload SK"}
+                              <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={(e) => handleUploadSk(lvl.key, e)} disabled={isUploading} />
+                            </label>
                             {hasSk && (
-                              <button onClick={() => handlePreviewSk(lvl.key)} className={styles.btnApprove} style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem", border: "none", cursor: "pointer" }}>
-                                📄 SK
+                              <button onClick={() => handleDeleteSk(lvl.key)} className={styles.btnReject} style={{ fontSize: "0.8rem" }}>
+                                🗑️ Hapus SK
                               </button>
                             )}
-                            {isDpc && (
-                              <>
-                                <label className={styles.btnSave} style={{ cursor: "pointer", fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}>
-                                  {isUploading ? "⏳" : "📤 Upload SK"}
-                                  <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={(e) => handleUploadSk(lvl.key, e)} disabled={isUploading} />
-                                </label>
-                                <button className={styles.btnSave} onClick={() => openAddModal(lvl.key)} style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}>
-                                  + Tambah
-                                </button>
-                                {levelMembers.length > 0 && (
-                                  <button className={styles.btnReject} onClick={() => handleDeleteAll(lvl.key)} style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}>
-                                    🗑️ Hapus Semua
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                    {/* Data rows */}
-                    {levelMembers.length === 0 ? (
-                      <tr key={`empty-${lvl.key}`}>
-                        <td colSpan={isDpc ? 5 : 4} style={{ textAlign: "center", color: "#555", fontSize: "0.8rem", padding: "0.75rem" }}>
-                          Belum ada data.
-                        </td>
-                      </tr>
-                    ) : (
-                      levelMembers.map((member, idx) => {
-                        globalNo++;
-                        return (
-                          <tr key={member.id}>
-                            <td style={{ color: "#888" }}>{idx + 1}</td>
-                            <td style={{ fontWeight: 600 }}>{member.name}</td>
-                            <td style={{ color: "#D4AF37" }}>{member.position}</td>
-                            <td>{member.nomorSk || "-"}</td>
-                            {canEdit(lvl.key) && (
-                              <td>
-                                <button onClick={() => openEditModal(member)} className={styles.btnApprove} style={{ marginRight: "0.3rem" }}>Edit</button>
-                                <button onClick={() => handleDelete(member.id)} className={styles.btnReject}>Hapus</button>
-                              </td>
-                            )}
-                            {isDpc && !canEdit(lvl.key) && <td></td>}
-                          </tr>
-                        );
-                      })
-                    )}
-                  </>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-
-        {/* Modal Add/Edit */}
-        {showModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <h2>{editId ? "Edit Data Pengurus" : "Tambah Pengurus Baru"}</h2>
-              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
-                <div>
-                  <label className={styles.formLabel}>Tingkatan *</label>
-                  <select required className={`${styles.formInput} ${styles.formSelect}`} value={formData.level} onChange={e => setFormData({...formData, level: e.target.value})}>
-                    <option value="" disabled>Pilih Tingkatan</option>
-                    <option value="DPD">DPD</option>
-                    <option value="DPC">DPC</option>
-                    <optgroup label="PAC">
-                      <option value="PAC BARAT">PAC Tanjungpinang Barat</option>
-                      <option value="PAC KOTA">PAC Tanjungpinang Kota</option>
-                      <option value="PAC TIMUR">PAC Tanjungpinang Timur</option>
-                      <option value="PAC BUKIT BESTARI">PAC Bukit Bestari</option>
-                    </optgroup>
-                  </select>
-                </div>
-                <div>
-                  <label className={styles.formLabel}>Jabatan *</label>
-                  <input required className={styles.formInput} value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})} placeholder="Contoh: Ketua Umum" />
-                </div>
-                <div>
-                  <label className={styles.formLabel}>Nama Lengkap *</label>
-                  <input required className={styles.formInput} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Masukkan nama lengkap" />
-                </div>
-                <div>
-                  <label className={styles.formLabel}>Nomor SK</label>
-                  <input className={styles.formInput} value={formData.nomorSk} onChange={e => setFormData({...formData, nomorSk: e.target.value})} placeholder="Opsional" />
-                </div>
-                <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-                  <button type="button" className={styles.btnReject} onClick={() => setShowModal(false)} style={{ flex: 1 }}>Batal</button>
-                  <button type="submit" className={styles.btnSave} disabled={loading} style={{ flex: 1 }}>{loading ? "Menyimpan..." : "Simpan"}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
         {/* Modal SK Preview */}
         {showSkModal && skPreviewUrl && (
