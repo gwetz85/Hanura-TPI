@@ -25,6 +25,9 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
   const [viewState, setViewState] = useState<"SELECT_MAIN" | "SELECT_PAC" | "VIEW_DATA">("SELECT_MAIN");
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
 
+  const [skUrl, setSkUrl] = useState<string | null>(null);
+  const [uploadingSk, setUploadingSk] = useState(false);
+
   const initialForm = { level: "", position: "", name: "", ktaNumber: "", nik: "", nomorSk: "", photoUrl: "" };
   const [formData, setFormData] = useState(initialForm);
 
@@ -57,6 +60,62 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
       router.refresh();
     } catch (err: any) {
       alert(err.message);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!selectedLevel) return;
+    if (!confirm(`Yakin ingin HAPUS SEMUA DATA pengurus untuk ${selectedLevel}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    try {
+      const res = await fetch(`/api/board/all?level=${selectedLevel}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Gagal menghapus semua data");
+      setMembers(members.filter(m => m.level !== selectedLevel));
+      router.refresh();
+      alert(`Semua data pengurus ${selectedLevel} berhasil dihapus.`);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleUploadSk = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedLevel) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingSk(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Gagal mengupload file");
+      const data = await res.json();
+      
+      const resSk = await fetch("/api/board/sk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level: selectedLevel, fileUrl: data.url })
+      });
+      if (!resSk.ok) throw new Error("Gagal menyimpan data SK");
+      
+      setSkUrl(data.url);
+      alert("SK berhasil diupload!");
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setUploadingSk(false);
+      e.target.value = '';
+    }
+  };
+
+  const fetchSk = async (level: string) => {
+    try {
+      const res = await fetch(`/api/board/sk?level=${level}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSkUrl(data.fileUrl || null);
+      }
+    } catch (err) {
+      setSkUrl(null);
     }
   };
 
@@ -99,12 +158,14 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
     } else {
       setSelectedLevel(level);
       setViewState("VIEW_DATA");
+      fetchSk(level);
     }
   };
 
   const handlePacSelect = (pacName: string) => {
     setSelectedLevel(pacName);
     setViewState("VIEW_DATA");
+    fetchSk(pacName);
   };
 
   const displayedMembers = selectedLevel 
@@ -149,6 +210,26 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
           </div>
           {isDpc && viewState === "SELECT_MAIN" && (
             <button className={styles.btnSave} onClick={openAddModal}>+ TAMBAH PENGURUS</button>
+          )}
+          {viewState === "VIEW_DATA" && (
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              {skUrl && (
+                <a href={skUrl} target="_blank" rel="noopener noreferrer" className={styles.btnApprove} style={{ textDecoration: "none", display: "inline-block" }}>
+                  📄 Lihat / Download SK
+                </a>
+              )}
+              {isDpc && (
+                <>
+                  <label className={styles.btnSave} style={{ cursor: "pointer", display: "inline-block" }}>
+                    {uploadingSk ? "Mengupload..." : "📤 Upload SK"}
+                    <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={handleUploadSk} disabled={uploadingSk} />
+                  </label>
+                  <button className={styles.btnReject} onClick={handleDeleteAll}>
+                    🗑️ Hapus Semua Data
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
 
