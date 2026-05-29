@@ -31,6 +31,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (body.gender !== undefined) data.gender = body.gender || null;
     if (body.birthPlace !== undefined) data.birthPlace = body.birthPlace || null;
     if (body.birthDate !== undefined) data.birthDate = body.birthDate || null;
+    if (body.agama !== undefined) data.agama = body.agama || null;
     if (body.maritalStatus !== undefined) data.maritalStatus = body.maritalStatus || null;
     if (body.jobStatus !== undefined) data.jobStatus = body.jobStatus || null;
     if (body.address !== undefined) data.address = body.address || null;

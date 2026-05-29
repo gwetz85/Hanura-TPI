@@ -82,6 +82,7 @@ model Member {
   gender        String?
   birthPlace    String?
   birthDate     String?
+  agama         String?
   maritalStatus String?
   jobStatus     String?
   address       String?

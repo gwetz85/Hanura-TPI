@@ -16,6 +16,7 @@ interface Member {
   gender: string | null;
   birthPlace: string | null;
   birthDate: string | null;
+  agama: string | null;
   maritalStatus: string | null;
   jobStatus: string | null;
   address: string | null;
@@ -45,7 +46,7 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
 
   const initialForm = {
     pacId: "", noUrut: "", nomorKta: "", name: "", nik: "", phone: "", gender: "",
-    birthPlace: "", birthDate: "", maritalStatus: "", jobStatus: "", address: "", village: "", subDistrict: ""
+    birthPlace: "", birthDate: "", agama: "", maritalStatus: "", jobStatus: "", address: "", village: "", subDistrict: ""
   };
   const [formData, setFormData] = useState(initialForm);
   const [editId, setEditId] = useState<string | null>(null);
@@ -152,6 +153,7 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
       gender: m.gender || "",
       birthPlace: m.birthPlace || "",
       birthDate: m.birthDate || "",
+      agama: m.agama || "",
       maritalStatus: m.maritalStatus || "",
       jobStatus: m.jobStatus || "",
       address: m.address || "",
@@ -221,6 +223,7 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
           gender: row["JK"]?.toString() || null,
           birthPlace: row["Tempat Lahir"]?.toString() || null,
           birthDate: row["Tanggal Lahir"]?.toString() || null,
+          agama: row["Agama"]?.toString() || null,
           maritalStatus: row["Status Perkawinan"]?.toString() || null,
           jobStatus: row["Status Pekerjaan"]?.toString() || null,
           address: row["Alamat"]?.toString() || null,
@@ -446,6 +449,7 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
               <div style={{ color: "#aaa" }}>Kontak / No HP</div><div>: {viewMember.phone || "-"}</div>
               <div style={{ color: "#aaa" }}>Jenis Kelamin</div><div>: {viewMember.gender || "-"}</div>
               <div style={{ color: "#aaa" }}>Tempat, Tgl Lahir</div><div>: {viewMember.birthPlace ? viewMember.birthPlace + ", " : ""}{viewMember.birthDate || "-"}</div>
+              <div style={{ color: "#aaa" }}>Agama</div><div>: {viewMember.agama || "-"}</div>
               <div style={{ color: "#aaa" }}>Status Perkawinan</div><div>: {viewMember.maritalStatus || "-"}</div>
               <div style={{ color: "#aaa" }}>Status Pekerjaan</div><div>: {viewMember.jobStatus || "-"}</div>
               <div style={{ color: "#aaa" }}>Alamat Lengkap</div><div>: {viewMember.address || "-"}</div>
@@ -536,7 +540,11 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Jenis Kelamin</label>
-                <input type="text" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className={styles.replyInput} />
+                <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className={styles.replyInput}>
+                  <option value="">-- Pilih --</option>
+                  <option value="L">L</option>
+                  <option value="P">P</option>
+                </select>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -546,17 +554,41 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Tanggal Lahir</label>
-                <input type="text" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} className={styles.replyInput} placeholder="DD/MM/YYYY" />
+                <input type="date" value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} className={styles.replyInput} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Agama</label>
+                <select value={formData.agama} onChange={(e) => setFormData({ ...formData, agama: e.target.value })} className={styles.replyInput}>
+                  <option value="">-- Pilih Agama --</option>
+                  <option value="Islam">Islam</option>
+                  <option value="Kristen Protestan">Kristen Protestan</option>
+                  <option value="Katolik">Katolik</option>
+                  <option value="Hindu">Hindu</option>
+                  <option value="Buddha">Buddha</option>
+                  <option value="Konghucu">Konghucu</option>
+                  <option value="Aliran Kepercayaan">Aliran Kepercayaan</option>
+                </select>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Perkawinan</label>
-                <input type="text" value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })} className={styles.replyInput} />
+                <select value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })} className={styles.replyInput}>
+                  <option value="">-- Pilih --</option>
+                  <option value="Pernah">Pernah</option>
+                  <option value="Belum">Belum</option>
+                  <option value="Kawin">Kawin</option>
+                </select>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Status Pekerjaan</label>
-                <input type="text" value={formData.jobStatus} onChange={(e) => setFormData({ ...formData, jobStatus: e.target.value })} className={styles.replyInput} />
+                <select value={formData.jobStatus} onChange={(e) => setFormData({ ...formData, jobStatus: e.target.value })} className={styles.replyInput}>
+                  <option value="">-- Pilih Pekerjaan --</option>
+                  {["BELUM/TIDAK BEKERJA", "MENGURUS RUMAH TANGGA", "PELAJAR/MAHASISWA", "PENSIUNAN", "PEGAWAI NEGERI SIPIL", "TENTARA NASIONAL INDONESIA", "KEPOLISIAN RI", "PERDAGANGAN", "PETANI/PEKEBUN", "PETERNAK", "NELAYAN/PERIKANAN", "INDUSTRI", "KONSTRUKSI", "TRANSPORTASI", "KARYAWAN SWASTA", "KARYAWAN BUMN", "KARYAWAN BUMD", "KARYAWAN HONORER", "BURUH HARIAN LEPAS", "BURUH TANI/PERKEBUNAN", "BURUH NELAYAN/PERIKANAN", "BURUH PETERNAKAN", "PEMBANTU RUMAH TANGGA", "WIRASWASTA", "LAINNYA"].map(job => (
+                    <option key={job} value={job}>{job}</option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -565,13 +597,24 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kelurahan</label>
-                <input type="text" value={formData.village} onChange={(e) => setFormData({ ...formData, village: e.target.value })} className={styles.replyInput} />
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kecamatan</label>
+                <select value={formData.subDistrict} onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value, village: "" })} className={styles.replyInput}>
+                  <option value="">-- Pilih Kecamatan --</option>
+                  <option value="Tanjungpinang Barat">Tanjungpinang Barat</option>
+                  <option value="Tanjungpinang Kota">Tanjungpinang Kota</option>
+                  <option value="Tanjungpinang Timur">Tanjungpinang Timur</option>
+                  <option value="Bukit Bestari">Bukit Bestari</option>
+                </select>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kecamatan</label>
-                <input type="text" value={formData.subDistrict} onChange={(e) => setFormData({ ...formData, subDistrict: e.target.value })} className={styles.replyInput} />
+                <label style={{ fontSize: "0.875rem", color: "#aaa" }}>Nama Kelurahan</label>
+                <select value={formData.village} onChange={(e) => setFormData({ ...formData, village: e.target.value })} className={styles.replyInput}>
+                  <option value="">-- Pilih Kelurahan --</option>
+                  {["Tanjungpinang Barat", "Kemboja", "Kampung Baru", "Bukit Cermin", "Tanjungpinang Kota", "Penyengat", "Kampung Bugis", "Senggarang", "Batu IX", "Melayu Kota Piring", "Air Raja", "Pinang Kencana", "Kampung Bulang", "Tanjung Ayun Sakti", "Sei Jang", "Dompak", "Tanjung Unggat", "Tanjungpinang Timur (kelurahan)"].map(vil => (
+                    <option key={vil} value={vil}>{vil}</option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", marginTop: "1.5rem", gap: "1rem" }}>

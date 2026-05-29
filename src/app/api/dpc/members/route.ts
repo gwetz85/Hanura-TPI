@@ -24,6 +24,7 @@ export async function POST(req: Request) {
         gender: m.gender || null,
         birthPlace: m.birthPlace || null,
         birthDate: m.birthDate || null,
+        agama: m.agama || null,
         maritalStatus: m.maritalStatus || null,
         jobStatus: m.jobStatus || null,
         address: m.address || null,
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: `Successfully inserted ${validMembers.length} members` }, { status: 201 });
     } else {
       // Single insert
-      const { pacId, noUrut, nomorKta, name, nik, phone, gender, birthPlace, birthDate, maritalStatus, jobStatus, address, village, subDistrict, isVerified } = body;
+      const { pacId, noUrut, nomorKta, name, nik, phone, gender, birthPlace, birthDate, agama, maritalStatus, jobStatus, address, village, subDistrict, isVerified } = body;
 
       if (!pacId || !name) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
           gender: gender || null,
           birthPlace: birthPlace || null,
           birthDate: birthDate || null,
+          agama: agama || null,
           maritalStatus: maritalStatus || null,
           jobStatus: jobStatus || null,
           address: address || null,
