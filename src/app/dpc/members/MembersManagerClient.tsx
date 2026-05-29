@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import styles from "../crud.module.css";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -30,6 +30,11 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [loading, setLoading] = useState(false);
+
+  // Sync state with server component updates
+  useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
   const [uploading, setUploading] = useState(false);
   const [filterPac, setFilterPac] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,6 +115,20 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
         } catch(e) {}
         throw new Error(msg);
       }
+
+      const savedData = await res.json().catch(() => null);
+      if (savedData && savedData.id) {
+        const selectedPac = pacs.find(p => p.id === savedData.pacId) || { name: "", role: "" };
+        const memberWithPac = { ...savedData, pac: { name: selectedPac.name, role: selectedPac.role } };
+        
+        if (editId) {
+          setMembers(prev => prev.map(m => m.id === editId ? { ...m, ...memberWithPac } : m));
+          setViewMember(prev => prev && prev.id === editId ? { ...prev, ...memberWithPac } : prev);
+        } else {
+          setMembers(prev => [memberWithPac, ...prev]);
+        }
+      }
+
       setFormData(initialForm);
       setEditId(null);
       setShowModal(false);
@@ -147,6 +166,8 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
     try {
       const res = await fetch(`/api/dpc/members/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus");
+      
+      setMembers(prev => prev.filter(m => m.id !== id));
       router.refresh();
     } catch (err: any) {
       alert(err.message);
@@ -161,6 +182,8 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
     try {
       const res = await fetch(`/api/dpc/members?pacId=${filterPac}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus semua data");
+      
+      setMembers(prev => prev.filter(m => m.pacId !== filterPac));
       alert("Seluruh data anggota PAC tersebut telah dihapus.");
       router.refresh();
     } catch (err: any) {
