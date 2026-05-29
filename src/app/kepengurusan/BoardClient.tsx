@@ -112,24 +112,24 @@ export default function BoardClient({ boardMembers: _initialMembers, userRole }:
 
   return (
     <div className={styles.container} style={{ alignItems: "flex-start" }}>
-      <div className={styles.glassCard} style={{ maxWidth: "900px", margin: "0 auto" }}>
+      <div className={styles.glassCard} style={{ maxWidth: "960px", margin: "0 auto" }}>
 
-        <a href={isDpc ? "/dpc" : "/pac"} className={styles.backLink}>← Kembali ke Dashboard</a>
+        <a href={isDpc ? "/dpc" : "/pac"} className={styles.backLink} style={{ fontSize: "1rem" }}>← Kembali ke Dashboard</a>
 
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Struktur Kepengurusan</h1>
-            <p style={{ color: "#a0a0a0", fontSize: "0.9rem", marginTop: "0.5rem" }}>SK Kepengurusan DPD, DPC, dan PAC.</p>
+            <h1 className={styles.title} style={{ fontSize: "1.85rem" }}>Struktur Kepengurusan</h1>
+            <p style={{ color: "#a0a0a0", fontSize: "1.05rem", marginTop: "0.5rem" }}>SK Kepengurusan DPD, DPC, dan PAC.</p>
           </div>
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ fontSize: "1rem" }}>
             <thead>
               <tr>
-                <th style={{ width: "50px", textAlign: "center" }}>No</th>
-                <th>Tingkatan</th>
-                <th style={{ textAlign: "center" }}>Aksi</th>
+                <th style={{ width: "60px", textAlign: "center", fontSize: "1rem", padding: "1rem" }}>No</th>
+                <th style={{ fontSize: "1rem", padding: "1rem" }}>Tingkatan</th>
+                <th style={{ textAlign: "center", fontSize: "1rem", padding: "1rem" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -139,25 +139,25 @@ export default function BoardClient({ boardMembers: _initialMembers, userRole }:
 
                 return (
                   <tr key={lvl.key}>
-                    <td style={{ textAlign: "center", color: "#888", fontWeight: 600 }}>{idx + 1}</td>
-                    <td style={{ fontWeight: 600, fontSize: "0.95rem" }}>{lvl.label}</td>
-                    <td style={{ textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap" }}>
+                    <td style={{ textAlign: "center", color: "#888", fontWeight: 600, fontSize: "1rem", padding: "1rem" }}>{idx + 1}</td>
+                    <td style={{ fontWeight: 600, fontSize: "1.1rem", padding: "1rem" }}>{lvl.label}</td>
+                    <td style={{ textAlign: "center", padding: "1rem" }}>
+                      <div style={{ display: "flex", gap: "0.6rem", justifyContent: "center", flexWrap: "wrap" }}>
                         {hasSk ? (
-                          <button onClick={() => handlePreviewSk(lvl.key)} className={styles.btnApprove} style={{ fontSize: "0.8rem", border: "none", cursor: "pointer" }}>
+                          <button onClick={() => handlePreviewSk(lvl.key)} className={styles.btnApprove} style={{ fontSize: "0.95rem", border: "none", cursor: "pointer", padding: "0.5rem 1.1rem", borderRadius: "10px", fontWeight: 600 }}>
                             📄 Lihat SK
                           </button>
                         ) : (
-                          <span style={{ color: "#555", fontSize: "0.8rem", padding: "0.35rem 0.85rem" }}>Belum ada SK</span>
+                          <span style={{ color: "#555", fontSize: "0.95rem", padding: "0.5rem 1.1rem" }}>Belum ada SK</span>
                         )}
                         {isDpc && (
                           <>
-                            <label className={styles.btnSave} style={{ cursor: "pointer", fontSize: "0.8rem" }}>
+                            <label className={styles.btnSave} style={{ cursor: "pointer", fontSize: "0.95rem", padding: "0.5rem 1.1rem", borderRadius: "10px" }}>
                               {isUploading ? "⏳ Uploading..." : "📤 Upload SK"}
                               <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={(e) => handleUploadSk(lvl.key, e)} disabled={isUploading} />
                             </label>
                             {hasSk && (
-                              <button onClick={() => handleDeleteSk(lvl.key)} className={styles.btnReject} style={{ fontSize: "0.8rem" }}>
+                              <button onClick={() => handleDeleteSk(lvl.key)} className={styles.btnReject} style={{ fontSize: "0.95rem", padding: "0.5rem 1.1rem", borderRadius: "10px" }}>
                                 🗑️ Hapus SK
                               </button>
                             )}
@@ -174,16 +174,16 @@ export default function BoardClient({ boardMembers: _initialMembers, userRole }:
 
         {/* Modal SK Preview */}
         {showSkModal && skPreviewUrl && (
-          <div className={styles.modalOverlay} onClick={closeSkModal} style={{ zIndex: 1000, padding: "2rem" }}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ width: "90%", maxWidth: "1000px", height: "85vh", display: "flex", flexDirection: "column", padding: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
-                <h2 style={{ margin: 0, color: "#D4AF37" }}>Preview SK — {LEVELS.find(l => l.key === skPreviewLevel)?.label}</h2>
+          <div className={styles.modalOverlay} onClick={closeSkModal} style={{ zIndex: 999999, padding: "1.5rem" }}>
+            <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ width: "95%", maxWidth: "1100px", height: "90vh", display: "flex", flexDirection: "column", padding: "1.5rem 2rem", maxHeight: "calc(100vh - 3rem)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem", flexShrink: 0 }}>
+                <h2 style={{ margin: 0, color: "#D4AF37", fontSize: "1.4rem" }}>Preview SK — {LEVELS.find(l => l.key === skPreviewLevel)?.label}</h2>
                 <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <a href={skPreviewUrl} download={`SK_${skPreviewLevel}`} className={styles.btnApprove} style={{ textDecoration: "none", padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>⬇️ Download</a>
-                  <button onClick={closeSkModal} className={styles.btnReject} style={{ padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>✖ Tutup</button>
+                  <a href={skPreviewUrl} download={`SK_${skPreviewLevel}`} className={styles.btnApprove} style={{ textDecoration: "none", padding: "0.6rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "1rem" }}>⬇️ Download</a>
+                  <button onClick={closeSkModal} className={styles.btnReject} style={{ padding: "0.6rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "1rem" }}>✖ Tutup</button>
                 </div>
               </div>
-              <div style={{ flex: 1, backgroundColor: "#fff", borderRadius: "8px", overflow: "hidden" }}>
+              <div style={{ flex: 1, backgroundColor: "#fff", borderRadius: "10px", overflow: "hidden", minHeight: 0 }}>
                 <iframe src={skPreviewUrl} width="100%" height="100%" style={{ border: "none" }} title="Preview SK" />
               </div>
             </div>
