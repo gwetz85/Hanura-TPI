@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styles from "../dpc/crud.module.css";
 import { useRouter } from "next/navigation";
 
@@ -14,6 +14,15 @@ interface BoardMember {
   photoUrl: string | null;
 }
 
+const LEVELS = [
+  { key: "DPD", label: "DPD", icon: "🏛️", color: "#D4AF37" },
+  { key: "DPC", label: "DPC", icon: "🏢", color: "#D4AF37" },
+  { key: "PAC BARAT", label: "PAC Tanjungpinang Barat", icon: "👥", color: "#2ed573" },
+  { key: "PAC KOTA", label: "PAC Tanjungpinang Kota", icon: "👥", color: "#6c5ce7" },
+  { key: "PAC TIMUR", label: "PAC Tanjungpinang Timur", icon: "👥", color: "#00cec9" },
+  { key: "PAC BUKIT BESTARI", label: "PAC Bukit Bestari", icon: "👥", color: "#e17055" },
+];
+
 export default function BoardClient({ boardMembers: initialMembers, userRole }: { boardMembers: BoardMember[], userRole: string }) {
   const router = useRouter();
   const isDpc = userRole === "DPC";
@@ -22,20 +31,40 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const [viewState, setViewState] = useState<"SELECT_MAIN" | "SELECT_PAC" | "VIEW_DATA">("SELECT_MAIN");
-  const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  // SK states per level
+  const [skUrls, setSkUrls] = useState<Record<string, string | null>>({});
+  const [uploadingSk, setUploadingSk] = useState<string | null>(null);
 
-  const [skUrl, setSkUrl] = useState<string | null>(null);
-  const [uploadingSk, setUploadingSk] = useState(false);
+  // SK Preview modal
   const [showSkModal, setShowSkModal] = useState(false);
   const [skPreviewUrl, setSkPreviewUrl] = useState<string | null>(null);
+  const [skPreviewLevel, setSkPreviewLevel] = useState<string>("");
 
   const initialForm = { level: "", position: "", name: "", ktaNumber: "", nik: "", nomorSk: "", photoUrl: "" };
   const [formData, setFormData] = useState(initialForm);
 
-  const openAddModal = () => {
+  // Fetch all SK on mount
+  const fetchAllSk = useCallback(async () => {
+    const results: Record<string, string | null> = {};
+    await Promise.all(
+      LEVELS.map(async (l) => {
+        try {
+          const res = await fetch(`/api/board/sk?level=${encodeURIComponent(l.key)}`);
+          if (res.ok) {
+            const data = await res.json();
+            results[l.key] = data.fileUrl || null;
+          }
+        } catch { results[l.key] = null; }
+      })
+    );
+    setSkUrls(results);
+  }, []);
+
+  useEffect(() => { fetchAllSk(); }, [fetchAllSk]);
+
+  const openAddModal = (level: string) => {
     setEditId(null);
-    setFormData({ ...initialForm, level: selectedLevel || "" });
+    setFormData({ ...initialForm, level });
     setShowModal(true);
   };
 
@@ -60,105 +89,22 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
       if (!res.ok) throw new Error("Gagal menghapus data");
       setMembers(members.filter(m => m.id !== id));
       router.refresh();
-    } catch (err: any) {
-      alert(err.message);
-    }
+    } catch (err: any) { alert(err.message); }
   };
 
-  const handleDeleteAll = async () => {
-    if (!selectedLevel) return;
-    if (!confirm(`Yakin ingin HAPUS SEMUA DATA pengurus untuk ${selectedLevel}? Tindakan ini tidak dapat dibatalkan.`)) return;
+  const handleDeleteAll = async (level: string) => {
+    if (!confirm(`Yakin ingin HAPUS SEMUA DATA pengurus ${level}?\nTindakan ini tidak dapat dibatalkan.`)) return;
     try {
-      const res = await fetch(`/api/board/all?level=${selectedLevel}`, { method: "DELETE" });
+      const res = await fetch(`/api/board/all?level=${encodeURIComponent(level)}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus semua data");
-      setMembers(members.filter(m => m.level !== selectedLevel));
+      setMembers(members.filter(m => m.level !== level));
       router.refresh();
-      alert(`Semua data pengurus ${selectedLevel} berhasil dihapus.`);
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const handleUploadSk = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedLevel) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingSk(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Gagal mengupload file");
-      const data = await res.json();
-      
-      const resSk = await fetch("/api/board/sk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level: selectedLevel, fileUrl: data.url })
-      });
-      if (!resSk.ok) throw new Error("Gagal menyimpan data SK");
-      
-      setSkUrl(data.url);
-      alert("SK berhasil diupload!");
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setUploadingSk(false);
-      e.target.value = '';
-    }
-  };
-
-  const fetchSk = async (level: string) => {
-    try {
-      const res = await fetch(`/api/board/sk?level=${level}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSkUrl(data.fileUrl || null);
-      }
-    } catch (err) {
-      setSkUrl(null);
-    }
-  };
-
-  const handlePreviewSk = () => {
-    if (!skUrl) return;
-    try {
-      if (skUrl.startsWith("data:")) {
-        const arr = skUrl.split(",");
-        const mime = arr[0].match(/:(.*?);/)?.[1] || "application/pdf";
-        const bstr = atob(arr[1]);
-        let n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        while (n--) {
-          u8arr[n] = bstr.charCodeAt(n);
-        }
-        const blob = new Blob([u8arr], { type: mime });
-        const url = URL.createObjectURL(blob);
-        setSkPreviewUrl(url);
-        setShowSkModal(true);
-      } else {
-        setSkPreviewUrl(skUrl);
-        setShowSkModal(true);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Gagal membuka file. Pastikan file valid.");
-    }
-  };
-
-  const closeSkModal = () => {
-    setShowSkModal(false);
-    if (skPreviewUrl && skPreviewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(skPreviewUrl);
-    }
-    setSkPreviewUrl(null);
+    } catch (err: any) { alert(err.message); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       if (editId) {
         const res = await fetch(`/api/board/${editId}`, {
@@ -181,203 +127,178 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
       }
       setShowModal(false);
       router.refresh();
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
+    } catch (err: any) { alert(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleUploadSk = async (level: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingSk(level);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Gagal mengupload file");
+      const data = await res.json();
+
+      const resSk = await fetch("/api/board/sk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ level, fileUrl: data.url })
+      });
+      if (!resSk.ok) throw new Error("Gagal menyimpan data SK");
+
+      setSkUrls(prev => ({ ...prev, [level]: data.url }));
+    } catch (err: any) { alert(err.message); }
+    finally {
+      setUploadingSk(null);
+      e.target.value = '';
     }
   };
 
-  const handleMainSelect = (level: string) => {
-    if (level === "PAC") {
-      setViewState("SELECT_PAC");
-    } else {
-      setSelectedLevel(level);
-      setViewState("VIEW_DATA");
-      fetchSk(level);
-    }
+  const handlePreviewSk = (level: string) => {
+    const url = skUrls[level];
+    if (!url) return;
+    try {
+      if (url.startsWith("data:")) {
+        const arr = url.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || "application/pdf";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        setSkPreviewUrl(blobUrl);
+      } else {
+        setSkPreviewUrl(url);
+      }
+      setSkPreviewLevel(level);
+      setShowSkModal(true);
+    } catch (err) { alert("Gagal membuka file SK."); }
   };
 
-  const handlePacSelect = (pacName: string) => {
-    setSelectedLevel(pacName);
-    setViewState("VIEW_DATA");
-    fetchSk(pacName);
+  const closeSkModal = () => {
+    setShowSkModal(false);
+    if (skPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(skPreviewUrl);
+    setSkPreviewUrl(null);
+    setSkPreviewLevel("");
   };
 
-  const displayedMembers = selectedLevel 
-    ? members.filter(m => m.level === selectedLevel) 
-    : [];
-
-  const showActions = isDpc && !selectedLevel?.startsWith("PAC");
+  const showActions = (level: string) => isDpc && !level.startsWith("PAC");
 
   return (
-    <div className={styles.container}>
-      <div className={styles.glassCard} style={{ maxWidth: "1200px" }}>
-        
-        {viewState === "SELECT_MAIN" ? (
-          <a href={isDpc ? "/dpc" : "/pac"} className={styles.backLink}>
-            ← Kembali ke Dashboard
-          </a>
-        ) : viewState === "SELECT_PAC" ? (
-          <button onClick={() => setViewState("SELECT_MAIN")} className={styles.backLink} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            ← Kembali ke Pilihan Utama
-          </button>
-        ) : (
-          <button 
-            onClick={() => {
-              if (selectedLevel?.startsWith("PAC ")) setViewState("SELECT_PAC");
-              else setViewState("SELECT_MAIN");
-            }} 
-            className={styles.backLink} 
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            ← Kembali ke Pilihan Tingkatan
-          </button>
-        )}
+    <div className={styles.container} style={{ alignItems: "flex-start" }}>
+      <div style={{ width: "100%", maxWidth: "1200px", margin: "0 auto" }}>
 
-        <div className={styles.header}>
+        {/* Header */}
+        <a href={isDpc ? "/dpc" : "/pac"} className={styles.backLink}>← Kembali ke Dashboard</a>
+
+        <div className={styles.header} style={{ marginBottom: "2rem" }}>
           <div>
-            <h1 className={styles.title}>Struktur Kepengurusan</h1>
+            <h1 className={styles.title} style={{ fontSize: "2rem" }}>Struktur Kepengurusan</h1>
             <p style={{ color: "#a0a0a0", fontSize: "0.9rem", marginTop: "0.5rem" }}>
-              {viewState === "SELECT_MAIN" && "Pilih tingkatan kepengurusan untuk melihat daftar pengurus."}
-              {viewState === "SELECT_PAC" && "Pilih PAC untuk melihat pengurus."}
-              {viewState === "VIEW_DATA" && `Daftar susunan pengurus ${selectedLevel}.`}
+              Daftar lengkap susunan pengurus DPD, DPC, dan PAC.
             </p>
           </div>
-          {isDpc && viewState === "SELECT_MAIN" && (
-            <button className={styles.btnSave} onClick={openAddModal}>+ TAMBAH PENGURUS</button>
-          )}
-          {viewState === "VIEW_DATA" && (
-            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-              {skUrl && (
-                <button onClick={handlePreviewSk} className={styles.btnApprove} style={{ textDecoration: "none", display: "inline-block", border: "none", cursor: "pointer", fontSize: "1rem" }}>
-                  📄 Lihat / Download SK
-                </button>
-              )}
-              {isDpc && (
-                <>
-                  <label className={styles.btnSave} style={{ cursor: "pointer", display: "inline-block" }}>
-                    {uploadingSk ? "Mengupload..." : "📤 Upload SK"}
-                    <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={handleUploadSk} disabled={uploadingSk} />
-                  </label>
-                  <button className={styles.btnReject} onClick={handleDeleteAll}>
-                    🗑️ Hapus Semua Data
-                  </button>
-                </>
-              )}
-            </div>
-          )}
         </div>
 
-        {viewState === "SELECT_MAIN" && (
-          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", marginTop: "2rem" }}>
-            {["DPD", "DPC", "PAC"].map((level) => (
-              <div
-                key={level}
-                onClick={() => handleMainSelect(level)}
-                style={{
-                  flex: "1 1 300px",
-                  background: "linear-gradient(135deg, rgba(212,175,55,0.1), rgba(212,175,55,0.05))",
-                  border: "1px solid rgba(212,175,55,0.3)",
-                  borderRadius: "16px",
-                  padding: "2rem",
-                  cursor: "pointer",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-5px)";
-                  e.currentTarget.style.boxShadow = "0 12px 40px rgba(212,175,55,0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)";
-                }}
-              >
-                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🏛️</div>
-                <h3 style={{ color: "#D4AF37", margin: 0, fontSize: "1.5rem" }}>{level}</h3>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* All sections */}
+        {LEVELS.map((lvl) => {
+          const levelMembers = members.filter(m => m.level === lvl.key);
+          const hasSk = !!skUrls[lvl.key];
+          const isUploading = uploadingSk === lvl.key;
 
-        {viewState === "SELECT_PAC" && (
-          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", marginTop: "2rem" }}>
-            {["PAC BARAT", "PAC KOTA", "PAC TIMUR", "PAC BUKIT BESTARI"].map((pac) => (
-              <div
-                key={pac}
-                onClick={() => handlePacSelect(pac)}
-                style={{
-                  flex: "1 1 200px",
-                  background: "linear-gradient(135deg, rgba(46,213,115,0.1), rgba(46,213,115,0.05))",
-                  border: "1px solid rgba(46,213,115,0.3)",
-                  borderRadius: "16px",
-                  padding: "2rem",
-                  cursor: "pointer",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-5px)";
-                  e.currentTarget.style.boxShadow = "0 12px 40px rgba(46,213,115,0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)";
-                }}
-              >
-                <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>👥</div>
-                <h3 style={{ color: "#2ed573", margin: 0, fontSize: "1.2rem" }}>{pac}</h3>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {viewState === "VIEW_DATA" && (
-          <div style={{ overflowX: "auto", marginTop: "1rem" }}>
-            {displayedMembers.length === 0 ? (
-              <p className={styles.empty}>Belum ada data kepengurusan terdaftar untuk {selectedLevel}.</p>
-            ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Nama</th>
-                    <th>Jabatan</th>
-                    <th>Nomor SK</th>
-                    {showActions && <th>Aksi</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayedMembers.map(member => (
-                    <tr key={member.id}>
-                      <td style={{ fontWeight: 600 }}>{member.name}</td>
-                      <td style={{ color: "#D4AF37" }}>{member.position}</td>
-                      <td>{member.nomorSk || "-"}</td>
-                      {showActions && (
-                        <td>
-                          <button onClick={() => openEditModal(member)} className={styles.btnApprove} style={{ marginRight: "0.5rem" }}>Edit</button>
-                          <button onClick={() => handleDelete(member.id)} className={styles.btnReject}>Hapus</button>
-                        </td>
+          return (
+            <div
+              key={lvl.key}
+              className={styles.glassCard}
+              style={{
+                maxWidth: "100%",
+                marginBottom: "1.5rem",
+                borderLeft: `3px solid ${lvl.color}`,
+              }}
+            >
+              {/* Section header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span style={{ fontSize: "1.5rem" }}>{lvl.icon}</span>
+                  <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: lvl.color }}>{lvl.label}</h2>
+                  <span style={{
+                    background: `${lvl.color}20`,
+                    color: lvl.color,
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    padding: "0.15rem 0.6rem",
+                    borderRadius: "12px",
+                    border: `1px solid ${lvl.color}40`,
+                  }}>{levelMembers.length} Pengurus</span>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                  {hasSk && (
+                    <button onClick={() => handlePreviewSk(lvl.key)} className={styles.btnApprove} style={{ border: "none", cursor: "pointer", fontSize: "0.8rem" }}>
+                      📄 Lihat SK
+                    </button>
+                  )}
+                  {isDpc && (
+                    <>
+                      <label className={styles.btnSave} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", fontSize: "0.8rem" }}>
+                        {isUploading ? "⏳..." : "📤 Upload SK"}
+                        <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={(e) => handleUploadSk(lvl.key, e)} disabled={isUploading} />
+                      </label>
+                      <button className={styles.btnSave} onClick={() => openAddModal(lvl.key)} style={{ fontSize: "0.8rem" }}>+ Tambah</button>
+                      {levelMembers.length > 0 && (
+                        <button className={styles.btnReject} onClick={() => handleDeleteAll(lvl.key)} style={{ fontSize: "0.8rem" }}>
+                          🗑️ Hapus Semua
+                        </button>
                       )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
+                    </>
+                  )}
+                </div>
+              </div>
 
-        {/* Modal for CRUD */}
+              {/* Table */}
+              {levelMembers.length === 0 ? (
+                <p style={{ textAlign: "center", padding: "1.5rem", color: "#606060", fontSize: "0.875rem" }}>
+                  Belum ada data kepengurusan terdaftar.
+                </p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: "40px" }}>No</th>
+                        <th>Nama</th>
+                        <th>Jabatan</th>
+                        <th>Nomor SK</th>
+                        {showActions(lvl.key) && <th style={{ width: "140px" }}>Aksi</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {levelMembers.map((member, idx) => (
+                        <tr key={member.id}>
+                          <td style={{ color: "#808080" }}>{idx + 1}</td>
+                          <td style={{ fontWeight: 600 }}>{member.name}</td>
+                          <td style={{ color: lvl.color }}>{member.position}</td>
+                          <td>{member.nomorSk || "-"}</td>
+                          {showActions(lvl.key) && (
+                            <td>
+                              <button onClick={() => openEditModal(member)} className={styles.btnApprove} style={{ marginRight: "0.4rem" }}>Edit</button>
+                              <button onClick={() => handleDelete(member.id)} className={styles.btnReject}>Hapus</button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Modal for Add/Edit */}
         {showModal && (
           <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
             <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
@@ -390,16 +311,16 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
                     <option value="DPD">DPD</option>
                     <option value="DPC">DPC</option>
                     <optgroup label="PAC">
-                      <option value="PAC BARAT">PAC BARAT</option>
-                      <option value="PAC KOTA">PAC KOTA</option>
-                      <option value="PAC TIMUR">PAC TIMUR</option>
-                      <option value="PAC BUKIT BESTARI">PAC BUKIT BESTARI</option>
+                      <option value="PAC BARAT">PAC Tanjungpinang Barat</option>
+                      <option value="PAC KOTA">PAC Tanjungpinang Kota</option>
+                      <option value="PAC TIMUR">PAC Tanjungpinang Timur</option>
+                      <option value="PAC BUKIT BESTARI">PAC Bukit Bestari</option>
                     </optgroup>
                   </select>
                 </div>
                 <div>
                   <label className={styles.formLabel}>Jabatan *</label>
-                  <input required className={styles.formInput} value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})} placeholder="Contoh: Ketua Umum, Sekretaris DPD" />
+                  <input required className={styles.formInput} value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})} placeholder="Contoh: Ketua Umum, Sekretaris" />
                 </div>
                 <div>
                   <label className={styles.formLabel}>Nama Lengkap *</label>
@@ -422,10 +343,10 @@ export default function BoardClient({ boardMembers: initialMembers, userRole }: 
         {showSkModal && skPreviewUrl && (
           <div className={styles.modalOverlay} onClick={closeSkModal} style={{ zIndex: 1000, padding: "2rem" }}>
             <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ width: "90%", maxWidth: "1000px", height: "85vh", display: "flex", flexDirection: "column", padding: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <h2 style={{ margin: 0, color: "#D4AF37" }}>Preview SK - {selectedLevel}</h2>
-                <div style={{ display: "flex", gap: "1rem" }}>
-                  <a href={skPreviewUrl} download={`SK_${selectedLevel}`} className={styles.btnApprove} style={{ textDecoration: "none", padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>⬇️ Download File</a>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                <h2 style={{ margin: 0, color: "#D4AF37" }}>Preview SK — {LEVELS.find(l => l.key === skPreviewLevel)?.label || skPreviewLevel}</h2>
+                <div style={{ display: "flex", gap: "0.75rem" }}>
+                  <a href={skPreviewUrl} download={`SK_${skPreviewLevel}`} className={styles.btnApprove} style={{ textDecoration: "none", padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>⬇️ Download</a>
                   <button onClick={closeSkModal} className={styles.btnReject} style={{ padding: "0.5rem 1rem", borderRadius: "8px", fontWeight: "bold" }}>✖ Tutup</button>
                 </div>
               </div>
