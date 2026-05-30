@@ -184,7 +184,7 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
                 <table className={sharedStyles.table}>
                   <thead>
                     <tr>
-                      <th>Nama PAC</th>
+                      <th>Nama Akun</th>
                       <th>Username</th>
                       <th>Role</th>
                       <th>Dibuat Pada</th>
@@ -252,7 +252,7 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
 
               <form onSubmit={handleSubmit}>
                 <div className={localStyles.formGroup}>
-                  <label className={localStyles.label}>Nama PAC</label>
+                  <label className={localStyles.label}>Nama Akun</label>
                   <input
                     type="text"
                     className={localStyles.input}
