@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import AccountsManagerClient from "./AccountsManagerClient";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Kelola Akun – DPC HANURA TPI" };
 
 export default async function AccountsManagerPage() {
@@ -14,7 +15,7 @@ export default async function AccountsManagerPage() {
 
   const pacUsers = await prisma.user.findMany({
     where: {
-      role: { notIn: ["DPC", "ADMIN"] }
+      role: { not: "ADMIN" }
     },
     select: {
       id: true,
