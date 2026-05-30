@@ -1,15 +1,45 @@
 /* Premium PAC dashboard styles */
 .container {
   min-height: 100vh;
-  padding: 2.5rem;
+  padding: 4rem 2.5rem;
   background: var(--bg-dark, #0f0f11);
   display: flex;
+  flex-direction: row;
   align-items: flex-start;
   justify-content: center;
+  gap: 4rem;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    flex-direction: column;
+    gap: 3rem;
+    padding: 2.5rem 1.5rem;
+  }
+}
+
+/* Left Column Layout */
+.leftColumn {
+  flex: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .leftColumn {
+    max-width: 100%;
+  }
 }
 
 .header {
-  margin-bottom: 2.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .greeting {
@@ -19,7 +49,7 @@
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   background: linear-gradient(to right, #fff, #D4AF37);
   -webkit-background-clip: text;
@@ -27,11 +57,164 @@
   background-clip: text;
 }
 
+/* Action Row (Date and Logout button) */
+.actionRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.infoBar {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.5rem 0.875rem;
+  color: #a0a0a0;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.logoutBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 71, 87, 0.4);
+  color: #ff4757;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.logoutBtn:hover {
+  background: rgba(255, 71, 87, 0.15);
+  border-color: #ff4757;
+}
+
+/* Premium Glassmorphic Stats Card */
+.statsCard {
+  background: linear-gradient(135deg, rgba(25, 25, 30, 0.7) 0%, rgba(15, 15, 20, 0.7) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 20px;
+  padding: 1.75rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.statsCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.statsCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.statsCardTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #D4AF37;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.statsMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.statsMainLabel {
+  font-size: 0.8rem;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.statsMainValue {
+  font-size: 3.25rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #ffffff, #F3E5AB, #D4AF37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.statsDivider {
+  height: 1px;
+  background: linear-gradient(to right, rgba(212, 175, 55, 0.25), transparent);
+  margin-bottom: 1.25rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.statsItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.statsItemLabel {
+  font-size: 0.75rem;
+  color: #777777;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+
+.statsItemValue {
+  font-size: 1.85rem;
+  font-weight: 600;
+}
+
+.maleColor {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.femaleColor {
+  background: linear-gradient(to right, #ff0844, #ffb199);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Right Column Layout & Cards Grid */
+.rightColumn {
+  flex: 2;
+  width: 100%;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .card {
@@ -80,31 +263,4 @@
 
 .card:hover .cardArrow {
   transform: translateX(4px);
-}
-
-.infoBar {
-  background: rgba(212, 175, 55, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
-  color: #a0a0a0;
-  font-size: 0.875rem;
-}
-
-.logoutBtn {
-  background: transparent;
-  border: 1px solid rgba(255, 71, 87, 0.4);
-  color: #ff4757;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-family: 'Outfit', sans-serif;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.3s ease;
-  margin-top: 2rem;
-}
-
-.logoutBtn:hover {
-  background: rgba(255, 71, 87, 0.1);
-  border-color: #ff4757;
 }
