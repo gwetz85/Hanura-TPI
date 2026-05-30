@@ -164,12 +164,12 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
           <div>
             <h1 className={sharedStyles.title}>Kelola Akun</h1>
             <span style={{ color: "#a0a0a0", fontSize: "0.875rem" }}>
-              {accounts.length} PAC terdaftar
+              {accounts.length} Akun Terdaftar
             </span>
           </div>
           {!isFormOpen && (
             <button className={localStyles.btnAddAccount} onClick={handleOpenAddForm}>
-              <span>➕</span> Tambah Akun PAC
+              <span>➕</span> Tambah Akun
             </button>
           )}
         </div>
@@ -243,7 +243,7 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
             <div className={localStyles.formCard}>
               <div className={localStyles.formHeader}>
                 <h3 className={localStyles.formTitle}>
-                  {editingAccount ? "Edit Akun PAC" : "Tambah Akun PAC"}
+                  {editingAccount ? "Edit Akun" : "Tambah Akun"}
                 </h3>
                 <button className={localStyles.btnClose} onClick={handleCloseForm} title="Tutup Form">
                   ✕
@@ -320,7 +320,7 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
                     Batal
                   </button>
                   <button type="submit" className={localStyles.btnSubmit} disabled={loading}>
-                    {loading ? "Menyimpan..." : editingAccount ? "💾 Simpan Perubahan" : "➕ Tambah PAC"}
+                    {loading ? "Menyimpan..." : editingAccount ? "💾 Simpan Perubahan" : "➕ SIMPAN"}
                   </button>
                 </div>
               </form>
