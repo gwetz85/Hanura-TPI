@@ -13,7 +13,7 @@ export async function GET() {
   try {
     const pacUsers = await prisma.user.findMany({
       where: {
-        role: { not: "DPC" }
+        role: { not: "ADMIN" }
       },
       select: {
         id: true,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Semua field harus diisi" }, { status: 400 });
     }
 
-    const validRoles = ["PAC_BARAT", "PAC_KOTA", "PAC_TIMUR", "PAC_BUKIT_BESTARI"];
+    const validRoles = ["DPC", "PAC_BARAT", "PAC_KOTA", "PAC_TIMUR", "PAC_BUKIT_BESTARI"];
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: "Role PAC tidak valid" }, { status: 400 });
     }

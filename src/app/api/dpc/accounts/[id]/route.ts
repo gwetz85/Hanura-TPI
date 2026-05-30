@@ -21,7 +21,7 @@ export async function PUT(
       return NextResponse.json({ error: "Nama, username, dan role harus diisi" }, { status: 400 });
     }
 
-    const validRoles = ["PAC_BARAT", "PAC_KOTA", "PAC_TIMUR", "PAC_BUKIT_BESTARI"];
+    const validRoles = ["DPC", "PAC_BARAT", "PAC_KOTA", "PAC_TIMUR", "PAC_BUKIT_BESTARI"];
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: "Role PAC tidak valid" }, { status: 400 });
     }
