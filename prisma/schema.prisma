@@ -54,6 +54,10 @@ model ActivitySuggestion {
   reply        String?
   status       String   @default("PENDING") // PENDING, REPLIED
 
+  isReadByDpc  Boolean  @default(false)
+  isReadByPac  Boolean  @default(false)
+  creatorRole  String   @default("PAC") // PAC, DPC
+
   comments     ActivityComment[]
 
   createdAt    DateTime @default(now())

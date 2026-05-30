@@ -45,5 +45,14 @@ export async function POST(
     },
   });
 
+  // Mark as unread for the other party
+  const isDpcAdmin = ["DPC", "ADMIN"].includes(session.user.role as string);
+  await prisma.activitySuggestion.update({
+    where: { id: suggestionId },
+    data: isDpcAdmin
+      ? { isReadByPac: false, isReadByDpc: true }
+      : { isReadByDpc: false, isReadByPac: true },
+  });
+
   return NextResponse.json(comment, { status: 201 });
 }

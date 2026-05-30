@@ -30,6 +30,9 @@ export async function POST(request: Request) {
         location: location ?? null,
         activityType: activityType ?? null,
         pac: { connect: { id: session.user.id } },
+        creatorRole: "PAC",
+        isReadByPac: true,
+        isReadByDpc: false,
       },
     });
     return NextResponse.json(suggestion);

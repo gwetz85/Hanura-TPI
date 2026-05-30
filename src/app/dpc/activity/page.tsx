@@ -18,5 +18,11 @@ export default async function ActivityManagerPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  return <ActivityManagerClient suggestions={suggestions} />;
+  const pacs = await prisma.user.findMany({
+    where: { role: { notIn: ["DPC", "ADMIN"] } },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" }
+  });
+
+  return <ActivityManagerClient suggestions={suggestions} pacs={pacs} />;
 }

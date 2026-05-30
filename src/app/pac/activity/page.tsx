@@ -13,6 +13,7 @@ interface Suggestion {
   status: string;
   comments: { id: string }[];
   createdAt: string;
+  isReadByPac: boolean;
 }
 
 export default function ActivityPage() {
@@ -185,7 +186,9 @@ export default function ActivityPage() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  gap: "1rem"
+                  gap: "1rem",
+                  position: "relative",
+                  overflow: "hidden"
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLDivElement).style.background = "rgba(212,175,55,0.06)";
@@ -198,6 +201,11 @@ export default function ActivityPage() {
                   (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
                 }}
               >
+                {/* Unread indicator left border */}
+                {s.isReadByPac === false && (
+                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "4px", background: "#ff4757" }} />
+                )}
+
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
                     <span style={{
@@ -213,6 +221,11 @@ export default function ActivityPage() {
                     </span>
                     {s.activityType && (
                       <span style={{ color: "#D4AF37", fontSize: "0.75rem" }}>🏷️ {s.activityType}</span>
+                    )}
+                    {s.isReadByPac === false && (
+                      <span style={{ background: "rgba(255,71,87,0.15)", color: "#ff4757", padding: "0.15rem 0.5rem", borderRadius: "6px", fontSize: "0.7rem", fontWeight: 700, border: "1px solid rgba(255,71,87,0.3)" }}>
+                        Pesan Baru
+                      </span>
                     )}
                   </div>
                   <div style={{ fontWeight: 600, color: "#e0e0e0", fontSize: "0.95rem", marginBottom: "0.3rem" }}>{s.title}</div>

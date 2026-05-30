@@ -75,7 +75,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const backHref = session?.user?.role === "DPC" ? "/dpc/activity" : "/pac/activity";
+  const backHref = ["DPC", "ADMIN"].includes(session?.user?.role as string) ? "/dpc/activity" : "/pac/activity";
 
   if (status === "loading" || loading) return (
     <div className={styles.container}>
@@ -95,7 +95,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
     </div>
   );
 
-  const isDpc = session?.user?.role === "DPC";
+  const isDpc = ["DPC", "ADMIN"].includes(session?.user?.role as string);
   const myId = session?.user?.id;
 
   return (

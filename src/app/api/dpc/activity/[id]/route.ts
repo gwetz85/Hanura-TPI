@@ -31,6 +31,14 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Update read status
+  const isDpcAdmin = ["DPC", "ADMIN"].includes(session.user?.role as string);
+  if (isDpcAdmin && !suggestion.isReadByDpc) {
+    await prisma.activitySuggestion.update({ where: { id }, data: { isReadByDpc: true } });
+  } else if (!isDpcAdmin && !suggestion.isReadByPac) {
+    await prisma.activitySuggestion.update({ where: { id }, data: { isReadByPac: true } });
+  }
+
   return NextResponse.json(suggestion);
 }
 
