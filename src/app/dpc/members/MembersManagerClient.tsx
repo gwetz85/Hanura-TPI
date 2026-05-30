@@ -27,7 +27,7 @@ interface Member {
   createdAt: Date | string;
 }
 
-export default function MembersManagerClient({ members: initialMembers, pacs }: { members: Member[], pacs: Pac[] }) {
+export default function MembersManagerClient({ members: initialMembers, pacs, userRole }: { members: Member[], pacs: Pac[], userRole: string }) {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [loading, setLoading] = useState(false);
@@ -331,20 +331,24 @@ export default function MembersManagerClient({ members: initialMembers, pacs }: 
             )}
 
             <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                ref={fileInputRef}
-                style={{ display: "none" }}
-                onChange={handleFileUpload}
-              />
-              <button
-                className={styles.btnApprove}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? "Mengupload..." : "Upload Excel"}
-              </button>
+              {userRole === "ADMIN" && (
+                <>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFileUpload}
+                  />
+                  <button
+                    className={styles.btnApprove}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? "Mengupload..." : "Upload Excel"}
+                  </button>
+                </>
+              )}
 
               <button
                 className={styles.btnSave}

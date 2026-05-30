@@ -21,5 +21,7 @@ export default async function MembersManagerPage() {
     orderBy: { name: "asc" }
   });
 
-  return <MembersManagerClient members={members} pacs={pacs} />;
+  const userRole = session.user?.role as string;
+
+  return <MembersManagerClient members={members} pacs={pacs} userRole={userRole} />;
 }
