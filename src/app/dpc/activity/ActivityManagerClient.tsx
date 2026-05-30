@@ -132,11 +132,11 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
                   value={form.pacId} 
                   onChange={handleChange} 
                   required
-                  style={{ width: "100%", padding: "0.8rem", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", appearance: "none" }}
+                  style={{ width: "100%", padding: "0.8rem", background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", color: "#fff" }}
                 >
-                  <option value="">-- Pilih PAC --</option>
+                  <option value="" style={{ background: "#1a1a2e", color: "#aaa" }}>-- Pilih PAC --</option>
                   {pacs.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id} style={{ background: "#1a1a2e", color: "#fff" }}>{p.name}</option>
                   ))}
                 </select>
               </div>
@@ -180,9 +180,9 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", color: "#a0a0a0", marginBottom: "0.4rem" }}>Jenis Kegiatan</label>
-                  <select name="activityType" value={form.activityType} onChange={handleChange} style={{ width: "100%", padding: "0.8rem", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", appearance: "none" }}>
-                    <option value="">Pilih Jenis</option>
-                    {activityTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  <select name="activityType" value={form.activityType} onChange={handleChange} style={{ width: "100%", padding: "0.8rem", background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", color: "#fff" }}>
+                    <option value="" style={{ background: "#1a1a2e", color: "#aaa" }}>Pilih Jenis</option>
+                    {activityTypes.map(t => <option key={t} value={t} style={{ background: "#1a1a2e", color: "#fff" }}>{t}</option>)}
                   </select>
                 </div>
               </div>
