@@ -12,6 +12,7 @@ interface PacUser {
 }
 
 const ROLE_LABELS: Record<string, string> = {
+  DPC: "DPC Hanura TPI",
   PAC_BARAT: "PAC Tanjungpinang Barat",
   PAC_KOTA: "PAC Tanjungpinang Kota",
   PAC_TIMUR: "PAC Tanjungpinang Timur",
@@ -280,16 +281,17 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
                 </div>
 
                 <div className={localStyles.formGroup}>
-                  <label className={localStyles.label}>Role Wilayah</label>
+                  <label className={localStyles.label}>Role Wilayah / Posisi</label>
                   <select
                     className={localStyles.select}
                     value={role}
                     onChange={e => setRole(e.target.value)}
                   >
-                    <option value="PAC_BARAT">Tanjungpinang Barat</option>
-                    <option value="PAC_KOTA">Tanjungpinang Kota</option>
-                    <option value="PAC_TIMUR">Tanjungpinang Timur</option>
-                    <option value="PAC_BUKIT_BESTARI">Bukit Bestari</option>
+                    <option value="DPC">DPC (Pengurus Cabang)</option>
+                    <option value="PAC_BARAT">PAC Tanjungpinang Barat</option>
+                    <option value="PAC_KOTA">PAC Tanjungpinang Kota</option>
+                    <option value="PAC_TIMUR">PAC Tanjungpinang Timur</option>
+                    <option value="PAC_BUKIT_BESTARI">PAC Bukit Bestari</option>
                   </select>
                 </div>
 
