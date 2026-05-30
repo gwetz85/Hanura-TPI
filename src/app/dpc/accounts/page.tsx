@@ -4,17 +4,17 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import AccountsManagerClient from "./AccountsManagerClient";
 
-export const metadata = { title: "Kelola Akun PAC – DPC HANURA TPI" };
+export const metadata = { title: "Kelola Akun – DPC HANURA TPI" };
 
 export default async function AccountsManagerPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") {
+  if (!session || session.user?.role !== "ADMIN") {
     redirect("/login");
   }
 
   const pacUsers = await prisma.user.findMany({
     where: {
-      role: { not: "DPC" }
+      role: { notIn: ["DPC", "ADMIN"] }
     },
     select: {
       id: true,

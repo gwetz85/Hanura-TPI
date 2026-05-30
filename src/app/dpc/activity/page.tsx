@@ -8,7 +8,7 @@ export const metadata = { title: "Kelola Usulan Kegiatan – DPC HANURA" };
 
 export default async function ActivityManagerPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") redirect("/login");
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) redirect("/login");
 
   const suggestions = await prisma.activitySuggestion.findMany({
     include: {

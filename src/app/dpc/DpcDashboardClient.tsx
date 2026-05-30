@@ -25,6 +25,7 @@ interface Member {
 
 interface Props {
   userName: string;
+  userRole: string;
   pendingKta: number;
   pendingActivity: number;
   pacUsers: PacUser[];
@@ -35,7 +36,7 @@ interface Props {
   otherCount: number;
 }
 
-export default function DpcDashboardClient({ userName, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers, maleCount, femaleCount, otherCount }: Props) {
+export default function DpcDashboardClient({ userName, userRole, pendingKta, pendingActivity, pacUsers, memberCountMap, totalMembers, maleCount, femaleCount, otherCount }: Props) {
   const [selectedPac, setSelectedPac] = useState<{ id: string; name: string } | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,15 +75,23 @@ export default function DpcDashboardClient({ userName, pendingKta, pendingActivi
   // Helper: get PAC name by pacId
   const getPacName = (pacId: string) => pacUsers.find((p) => p.id === pacId)?.name ?? "-";
 
-  const menus = [
+  const allMenus = [
     { icon: "✉️", title: "SURAT DPC", desc: "Kelola pencatatan Surat Masuk dan Surat Keluar DPC.", href: "/dpc/surat" },
     { icon: "🪪", title: "Kelola Pengajuan KTA", desc: "Setujui atau tolak pengajuan KTA dari semua PAC.", href: "/dpc/kta" },
     { icon: "📋", title: "Kelola Usulan Kegiatan", desc: "Balas usulan kegiatan dari semua PAC.", href: "/dpc/activity" },
     { icon: "👥", title: "Upload Daftar Anggota", desc: "Upload daftar anggota resmi untuk masing-masing PAC.", href: "/dpc/members" },
-    { icon: "⚙️", title: "Kelola Akun PAC", desc: "Tambah, ubah, atau hapus akun PAC.", href: "/dpc/accounts" },
+    { icon: "⚙️", title: "Kelola Akun", desc: "Tambah, ubah, atau hapus akun PAC.", href: "/dpc/accounts" },
     { icon: "🗓️", title: "Kelola Event", desc: "Tambahkan kegiatan dan aktifkan countdown global.", href: "/dpc/events" },
     { icon: "🏛️", title: "Kepengurusan", desc: "Struktur organisasi dan kepengurusan Partai Hanura.", href: "/kepengurusan" },
   ];
+
+  // Filter menus: Kelola Akun and Kelola Event are ADMIN only
+  const menus = allMenus.filter(m => {
+    if (m.href === "/dpc/accounts" || m.href === "/dpc/events") {
+      return userRole === "ADMIN";
+    }
+    return true;
+  });
 
   const pacColors = [
     { gradient: "linear-gradient(135deg, #667eea, #764ba2)", glow: "rgba(102,126,234,0.25)", accent: "#667eea" },

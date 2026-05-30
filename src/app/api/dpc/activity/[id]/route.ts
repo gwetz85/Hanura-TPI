@@ -27,7 +27,7 @@ export async function GET(
   if (!suggestion) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // PAC can only see their own suggestions
-  if (session.user?.role !== "DPC" && suggestion.pacId !== session.user?.id) {
+  if (!["DPC", "ADMIN"].includes(session.user?.role as string) && suggestion.pacId !== session.user?.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -40,7 +40,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") {
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

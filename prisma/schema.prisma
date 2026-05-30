@@ -12,7 +12,7 @@ model User {
   id        String   @id @default(cuid())
   username  String   @unique
   password  String
-  role      String   // DPC, PAC_BARAT, PAC_KOTA, PAC_TIMUR, PAC_BUKIT_BESTARI
+  role      String   // ADMIN, DPC, PAC_BARAT, PAC_KOTA, PAC_TIMUR, PAC_BUKIT_BESTARI
   phone     String?  // PAC contact number (optional)
   name      String
 

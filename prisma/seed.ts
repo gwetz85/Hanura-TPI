@@ -6,7 +6,8 @@ const prisma = new PrismaClient()
 
 async function main() {
   const users = [
-    { username: 'admin', password: 'adminpassword', role: 'DPC', name: 'DPC Hanura TPI' },
+    { username: 'admin', password: 'adminpassword', role: 'ADMIN', name: 'Admin Hanura TPI' },
+    { username: 'dpc', password: 'dpcpassword', role: 'DPC', name: 'DPC Hanura TPI' },
     { username: 'pac_barat', password: 'pacbaratpassword', role: 'PAC_BARAT', name: 'PAC Tanjungpinang Barat' },
     { username: 'pac_kota', password: 'packotapassword', role: 'PAC_KOTA', name: 'PAC Tanjungpinang Kota' },
     { username: 'pac_timur', password: 'pactimurpassword', role: 'PAC_TIMUR', name: 'PAC Tanjungpinang Timur' },

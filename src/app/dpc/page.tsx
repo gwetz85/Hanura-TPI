@@ -8,12 +8,12 @@ export const metadata = { title: "DPC Dashboard – HANURA TPI" };
 
 export default async function DpcPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") redirect("/login");
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role || "")) redirect("/login");
 
   const [ktaCount, activityCount, pacUsers, memberCounts, maleCount, femaleCount, totalMembers] = await Promise.all([
     prisma.prospectiveMember.count({ where: { status: "PENDING" } }),
     prisma.activitySuggestion.count({ where: { status: "PENDING" } }),
-    prisma.user.findMany({ where: { role: { not: "DPC" } }, select: { id: true, name: true, role: true } }),
+    prisma.user.findMany({ where: { role: { notIn: ["DPC", "ADMIN"] } }, select: { id: true, name: true, role: true } }),
     prisma.member.groupBy({
       by: ["pacId"],
       _count: { id: true },
@@ -34,6 +34,7 @@ export default async function DpcPage() {
   return (
     <DpcDashboardClient
       userName={session.user?.name ?? "DPC"}
+      userRole={session.user?.role || ""}
       pendingKta={ktaCount}
       pendingActivity={activityCount}
       pacUsers={pacUsers}

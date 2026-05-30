@@ -8,7 +8,7 @@ export const metadata = { title: "Surat DPC – DPC HANURA TPI" };
 
 export default async function SuratPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") redirect("/login");
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) redirect("/login");
 
   const [suratMasuk, suratKeluar] = await Promise.all([
     prisma.incomingLetter.findMany({ orderBy: { createdAt: "desc" } }),

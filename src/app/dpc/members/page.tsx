@@ -8,7 +8,7 @@ export const metadata = { title: "Daftar Anggota – DPC HANURA TPI" };
 
 export default async function MembersManagerPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") redirect("/login");
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) redirect("/login");
 
   const members = await prisma.member.findMany({
     include: { pac: { select: { name: true, role: true } } },

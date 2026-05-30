@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") {
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -8,7 +8,7 @@ export const metadata = { title: "Kelola KTA – DPC HANURA TPI" };
 
 export default async function KtaManagerPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "DPC") redirect("/login");
+  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) redirect("/login");
 
   const [submissions, pacs] = await Promise.all([
     prisma.prospectiveMember.findMany({

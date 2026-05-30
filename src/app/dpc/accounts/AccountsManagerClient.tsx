@@ -161,7 +161,7 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
         </a>
         <div className={sharedStyles.header}>
           <div>
-            <h1 className={sharedStyles.title}>Kelola Akun PAC</h1>
+            <h1 className={sharedStyles.title}>Kelola Akun</h1>
             <span style={{ color: "#a0a0a0", fontSize: "0.875rem" }}>
               {accounts.length} PAC terdaftar
             </span>

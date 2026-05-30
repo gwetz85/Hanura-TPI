@@ -30,7 +30,7 @@ export async function POST(
   }
 
   // PAC can only comment on their own suggestions
-  if (session.user.role !== "DPC" && suggestion.pacId !== session.user.id) {
+  if (!["DPC", "ADMIN"].includes(session.user.role as string) && suggestion.pacId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
