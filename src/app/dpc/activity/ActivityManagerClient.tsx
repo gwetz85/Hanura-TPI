@@ -24,6 +24,23 @@ interface Pac {
   name: string;
 }
 
+const STATUS_OPTIONS = [
+  { value: "PENDING", label: "Pending", icon: "⏳" },
+  { value: "SEDANG_BERLANGSUNG", label: "Sedang Berlangsung", icon: "🔄" },
+  { value: "SELESAI", label: "Selesai", icon: "✅" },
+  { value: "BATAL", label: "Batal", icon: "🚫" },
+];
+
+const ACTIVITY_TYPES = ["Rapat Koordinasi", "Sosialisasi", "Musyawarah", "Bakti Sosial", "Pelatihan", "Kampanye", "Lainnya"];
+
+function getStatusLabel(status: string) {
+  return STATUS_OPTIONS.find(s => s.value === status)?.label ?? status;
+}
+
+function getStatusIcon(status: string) {
+  return STATUS_OPTIONS.find(s => s.value === status)?.icon ?? "📋";
+}
+
 export default function ActivityManagerClient({ suggestions: initial, pacs }: { suggestions: Suggestion[], pacs: Pac[] }) {
   const [suggestions, setSuggestions] = useState(initial);
   const router = useRouter();
@@ -35,6 +52,16 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Edit modal state
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", date: "", time: "", location: "", activityType: "" });
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Delete state
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTitle, setDeleteTitle] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const getPacLabel = (role: string) => {
     const map: Record<string, string> = {
       PAC_BARAT: "PAC Barat",
@@ -44,8 +71,6 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
     };
     return map[role] || role;
   };
-
-  const activityTypes = ["Rapat Koordinasi", "Sosialisasi", "Musyawarah", "Bakti Sosial", "Pelatihan", "Kampanye", "Lainnya"];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -77,6 +102,69 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Edit handlers
+  const openEdit = (s: Suggestion, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditForm({
+      title: s.title,
+      description: s.description,
+      date: s.date ? new Date(s.date).toISOString().split("T")[0] : "",
+      time: s.time || "",
+      location: s.location || "",
+      activityType: s.activityType || "",
+    });
+    setEditId(s.id);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId || editLoading) return;
+    setEditLoading(true);
+    try {
+      const res = await fetch(`/api/dpc/activity/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error("Gagal menyimpan perubahan");
+      const updated = await res.json();
+      setSuggestions(prev => prev.map(s => s.id === editId ? { ...s, ...updated } : s));
+      setEditId(null);
+      setSuccess("✅ Kegiatan berhasil diperbarui.");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError((err as Error).message);
+      setTimeout(() => setError(""), 3000);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Delete handlers
+  const openDelete = (s: Suggestion, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteId(s.id);
+    setDeleteTitle(s.title);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId || deleteLoading) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/dpc/activity/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Gagal menghapus kegiatan");
+      setSuggestions(prev => prev.filter(s => s.id !== deleteId));
+      setDeleteId(null);
+      setSuccess("✅ Kegiatan berhasil dihapus.");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError((err as Error).message);
+      setTimeout(() => setError(""), 3000);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -182,7 +270,7 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
                   <label style={{ display: "block", fontSize: "0.85rem", color: "#a0a0a0", marginBottom: "0.4rem" }}>Jenis Kegiatan</label>
                   <select name="activityType" value={form.activityType} onChange={handleChange} style={{ width: "100%", padding: "0.8rem", background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", color: "#fff" }}>
                     <option value="" style={{ background: "#1a1a2e", color: "#aaa" }}>Pilih Jenis</option>
-                    {activityTypes.map(t => <option key={t} value={t} style={{ background: "#1a1a2e", color: "#fff" }}>{t}</option>)}
+                    {ACTIVITY_TYPES.map(t => <option key={t} value={t} style={{ background: "#1a1a2e", color: "#fff" }}>{t}</option>)}
                   </select>
                 </div>
               </div>
@@ -239,7 +327,9 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
                 
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
-                    <span className={`${styles.badge} ${styles[s.status]}`}>{s.status}</span>
+                    <span className={`${styles.badge} ${styles[s.status]}`}>
+                      {getStatusIcon(s.status)} {getStatusLabel(s.status)}
+                    </span>
                     <span style={{ background: "rgba(212,175,55,0.1)", color: "#D4AF37", padding: "0.15rem 0.6rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 600 }}>
                       {getPacLabel(s.pac.role)}
                     </span>
@@ -260,6 +350,23 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem", flexShrink: 0 }}>
+                  {/* Edit & Delete Buttons */}
+                  <div style={{ display: "flex", gap: "0.35rem" }}>
+                    <button
+                      onClick={(e) => openEdit(s, e)}
+                      className={styles.btnInlineEdit}
+                      title="Edit Kegiatan"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => openDelete(s, e)}
+                      className={styles.btnInlineDelete}
+                      title="Hapus Kegiatan"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                   {s.comments.length > 0 && (
                     <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#a0a0a0", fontSize: "0.8rem" }}>
                       <span>💬</span>
@@ -276,6 +383,99 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
           </div>
         )}
       </div>
+
+      {/* EDIT MODAL */}
+      {editId && (
+        <div className={styles.modalOverlay} onClick={() => setEditId(null)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 style={{ margin: 0 }}>✏️ Edit Kegiatan</h2>
+              <button
+                onClick={() => setEditId(null)}
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#a0a0a0", width: "36px", height: "36px", borderRadius: "50%", fontSize: "1rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >✕</button>
+            </div>
+            <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label className={styles.formLabel}>Judul Kegiatan *</label>
+                <input className={styles.formInput} value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} required />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Deskripsi *</label>
+                <textarea className={`${styles.formInput}`} value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} required rows={4} style={{ resize: "vertical", minHeight: "100px" }} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <label className={styles.formLabel}>Tanggal</label>
+                  <input className={styles.formInput} type="date" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} style={{ colorScheme: "dark" }} />
+                </div>
+                <div>
+                  <label className={styles.formLabel}>Waktu</label>
+                  <input className={styles.formInput} type="time" value={editForm.time} onChange={e => setEditForm({ ...editForm, time: e.target.value })} style={{ colorScheme: "dark" }} />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <label className={styles.formLabel}>Lokasi</label>
+                  <input className={styles.formInput} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} placeholder="Contoh: Kantor DPC" />
+                </div>
+                <div>
+                  <label className={styles.formLabel}>Jenis Kegiatan</label>
+                  <select className={`${styles.formInput} ${styles.formSelect}`} value={editForm.activityType} onChange={e => setEditForm({ ...editForm, activityType: e.target.value })}>
+                    <option value="">Pilih Jenis</option>
+                    {ACTIVITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+                <button type="button" onClick={() => setEditId(null)} style={{ background: "rgba(255,255,255,0.06)", color: "#a0a0a0", border: "1px solid rgba(255,255,255,0.12)", padding: "0.6rem 1.25rem", borderRadius: "10px", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Batal</button>
+                <button type="submit" className={styles.btnSave} disabled={editLoading}>
+                  {editLoading ? "Menyimpan..." : "💾 Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION */}
+      {deleteId && (
+        <div className={styles.modalOverlay} onClick={() => setDeleteId(null)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "rgba(20,20,28,0.98)",
+            border: "1px solid rgba(255,71,87,0.2)",
+            borderRadius: "20px",
+            padding: "2.5rem",
+            width: "100%",
+            maxWidth: "420px",
+            textAlign: "center",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.8)",
+            animation: "slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}>
+            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🗑️</div>
+            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#fff", margin: "0 0 0.75rem 0" }}>Hapus Kegiatan?</h3>
+            <p style={{ color: "#a0a0a0", fontSize: "0.88rem", lineHeight: 1.5, margin: "0 0 1.5rem 0" }}>
+              Apakah Anda yakin ingin menghapus kegiatan <strong style={{ color: "#e0e0e0" }}>&quot;{deleteTitle}&quot;</strong>? Semua diskusi terkait juga akan dihapus.
+            </p>
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+              <button onClick={() => setDeleteId(null)} style={{ background: "rgba(255,255,255,0.06)", color: "#a0a0a0", border: "1px solid rgba(255,255,255,0.12)", padding: "0.6rem 1.25rem", borderRadius: "10px", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Batal</button>
+              <button onClick={handleDelete} disabled={deleteLoading} style={{
+                background: "rgba(255,71,87,0.2)",
+                color: "#ff4757",
+                border: "1px solid rgba(255,71,87,0.4)",
+                padding: "0.6rem 1.5rem",
+                borderRadius: "10px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                opacity: deleteLoading ? 0.5 : 1
+              }}>
+                {deleteLoading ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const where = session.user.role === "DPC"
+    const where = ["DPC", "ADMIN"].includes(session.user.role as string)
       ? {}
       : { pacId: session.user.id };
 

@@ -52,7 +52,7 @@ model ActivitySuggestion {
   location     String?
   activityType String?
   reply        String?
-  status       String   @default("PENDING") // PENDING, REPLIED
+  status       String   @default("PENDING") // PENDING, BATAL, SEDANG_BERLANGSUNG, SELESAI
 
   isReadByDpc  Boolean  @default(false)
   isReadByPac  Boolean  @default(false)

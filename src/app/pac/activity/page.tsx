@@ -16,6 +16,23 @@ interface Suggestion {
   isReadByPac: boolean;
 }
 
+const STATUS_OPTIONS = [
+  { value: "PENDING", label: "Pending", icon: "⏳", color: "#ffc400", bg: "rgba(255,196,0,0.15)", border: "rgba(255,196,0,0.3)" },
+  { value: "SEDANG_BERLANGSUNG", label: "Sedang Berlangsung", icon: "🔄", color: "#6495ed", bg: "rgba(100,149,237,0.15)", border: "rgba(100,149,237,0.3)" },
+  { value: "SELESAI", label: "Selesai", icon: "✅", color: "#2ed573", bg: "rgba(46,213,115,0.15)", border: "rgba(46,213,115,0.3)" },
+  { value: "BATAL", label: "Batal", icon: "🚫", color: "#ff4757", bg: "rgba(255,71,87,0.15)", border: "rgba(255,71,87,0.3)" },
+];
+
+function getStatusStyle(status: string) {
+  const s = STATUS_OPTIONS.find(opt => opt.value === status) || STATUS_OPTIONS[0];
+  return {
+    color: s.color,
+    background: s.bg,
+    border: `1px solid ${s.border}`,
+    label: `${s.icon} ${s.label}`
+  };
+}
+
 export default function ActivityPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -172,81 +189,84 @@ export default function ActivityPage() {
             <h3 style={{ color: "#a0a0a0", fontSize: "0.85rem", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "0.25rem" }}>
               Riwayat Usulan ({suggestions.length})
             </h3>
-            {suggestions.map(s => (
-              <div
-                key={s.id}
-                onClick={() => router.push(`/activity/${s.id}`)}
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "12px",
-                  padding: "1rem 1.25rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "1rem",
-                  position: "relative",
-                  overflow: "hidden"
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.background = "rgba(212,175,55,0.06)";
-                  (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(212,175,55,0.2)";
-                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
-                  (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.08)";
-                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                }}
-              >
-                {/* Unread indicator left border */}
-                {s.isReadByPac === false && (
-                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "4px", background: "#ff4757" }} />
-                )}
+            {suggestions.map(s => {
+              const statusStyle = getStatusStyle(s.status);
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => router.push(`/activity/${s.id}`)}
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "12px",
+                    padding: "1rem 1.25rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "1rem",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(212,175,55,0.06)";
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(212,175,55,0.2)";
+                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.08)";
+                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                  }}
+                >
+                  {/* Unread indicator left border */}
+                  {s.isReadByPac === false && (
+                    <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "4px", background: "#ff4757" }} />
+                  )}
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-                    <span style={{
-                      padding: "0.15rem 0.6rem",
-                      borderRadius: "12px",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      background: s.status === "REPLIED" ? "rgba(100,149,237,0.15)" : "rgba(255,196,0,0.15)",
-                      color: s.status === "REPLIED" ? "#6495ed" : "#ffc400",
-                      border: `1px solid ${s.status === "REPLIED" ? "rgba(100,149,237,0.3)" : "rgba(255,196,0,0.3)"}`
-                    }}>
-                      {s.status === "REPLIED" ? "✓ Dibalas" : "⏳ Menunggu"}
-                    </span>
-                    {s.activityType && (
-                      <span style={{ color: "#D4AF37", fontSize: "0.75rem" }}>🏷️ {s.activityType}</span>
-                    )}
-                    {s.isReadByPac === false && (
-                      <span style={{ background: "rgba(255,71,87,0.15)", color: "#ff4757", padding: "0.15rem 0.5rem", borderRadius: "6px", fontSize: "0.7rem", fontWeight: 700, border: "1px solid rgba(255,71,87,0.3)" }}>
-                        Pesan Baru
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
+                      <span style={{
+                        padding: "0.15rem 0.6rem",
+                        borderRadius: "12px",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        background: statusStyle.background,
+                        color: statusStyle.color,
+                        border: statusStyle.border
+                      }}>
+                        {statusStyle.label}
+                      </span>
+                      {s.activityType && (
+                        <span style={{ color: "#D4AF37", fontSize: "0.75rem" }}>🏷️ {s.activityType}</span>
+                      )}
+                      {s.isReadByPac === false && (
+                        <span style={{ background: "rgba(255,71,87,0.15)", color: "#ff4757", padding: "0.15rem 0.5rem", borderRadius: "6px", fontSize: "0.7rem", fontWeight: 700, border: "1px solid rgba(255,71,87,0.3)" }}>
+                          Pesan Baru
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontWeight: 600, color: "#e0e0e0", fontSize: "0.95rem", marginBottom: "0.3rem" }}>{s.title}</div>
+                    <div style={{ display: "flex", gap: "1rem", color: "#505050", fontSize: "0.78rem", flexWrap: "wrap" }}>
+                      {s.date && <span>📅 {new Date(s.date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</span>}
+                      {s.location && <span>📍 {s.location}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0 }}>
+                    {s.comments.length > 0 && (
+                      <span style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#a0a0a0", fontSize: "0.78rem" }}>
+                        💬 {s.comments.length}
                       </span>
                     )}
-                  </div>
-                  <div style={{ fontWeight: 600, color: "#e0e0e0", fontSize: "0.95rem", marginBottom: "0.3rem" }}>{s.title}</div>
-                  <div style={{ display: "flex", gap: "1rem", color: "#505050", fontSize: "0.78rem", flexWrap: "wrap" }}>
-                    {s.date && <span>📅 {new Date(s.date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</span>}
-                    {s.location && <span>📍 {s.location}</span>}
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0 }}>
-                  {s.comments.length > 0 && (
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#a0a0a0", fontSize: "0.78rem" }}>
-                      💬 {s.comments.length}
+                    <span style={{ color: "#404040", fontSize: "0.73rem" }}>
+                      {new Date(s.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}
                     </span>
-                  )}
-                  <span style={{ color: "#404040", fontSize: "0.73rem" }}>
-                    {new Date(s.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}
-                  </span>
-                  <span style={{ color: "#D4AF37", fontSize: "0.78rem" }}>Detail →</span>
+                    <span style={{ color: "#D4AF37", fontSize: "0.78rem" }}>Detail →</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
