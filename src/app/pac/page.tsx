@@ -104,7 +104,7 @@ export default function PacDashboard() {
       </div>
 
       <div className={styles.rightColumn}>
-        <div className={styles.grid}>
+        <div className={styles.navGrid}>
           {menus.map(m => (
             <Link key={m.href} href={m.href} className={styles.card}>
               <div className={styles.cardIcon}>{m.icon}</div>

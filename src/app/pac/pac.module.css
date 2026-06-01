@@ -211,6 +211,30 @@
   width: 100%;
 }
 
+/* Menu Navigation */
+.navGrid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,175,55,0.3) transparent;
+}
+
+.navGrid::-webkit-scrollbar {
+  height: 4px;
+}
+.navGrid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.navGrid::-webkit-scrollbar-thumb {
+  background: rgba(212,175,55,0.3);
+  border-radius: 4px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
