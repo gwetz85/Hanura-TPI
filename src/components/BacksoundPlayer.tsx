@@ -8,6 +8,18 @@ export default function BacksoundPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
+  // Fetch volume from DB and apply to audio element
+  useEffect(() => {
+    fetch("/api/backsound-volume")
+      .then(r => r.json())
+      .then(data => {
+        if (audioRef.current && typeof data.volume === "number") {
+          audioRef.current.volume = data.volume;
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     // Browsers block autoplay until the user interacts with the page
     const handleInteract = () => {
@@ -32,11 +44,22 @@ export default function BacksoundPlayer() {
     if (!role || (role !== "DPC" && !role.startsWith("PAC"))) return;
 
     if (hasInteracted && audioRef.current && !isPlaying) {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(err => {
-        console.error("Auto-play failed, might need more user interaction:", err);
-      });
+      // Re-fetch volume before playing to ensure latest value
+      fetch("/api/backsound-volume")
+        .then(r => r.json())
+        .then(data => {
+          if (audioRef.current && typeof data.volume === "number") {
+            audioRef.current.volume = data.volume;
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          audioRef.current?.play().then(() => {
+            setIsPlaying(true);
+          }).catch(err => {
+            console.error("Auto-play failed:", err);
+          });
+        });
     }
   }, [session, hasInteracted, isPlaying]);
 
