@@ -47,7 +47,7 @@ export default function BacksoundPlayer() {
 
   return (
     <audio ref={audioRef} loop>
-      <source src={`/uploads/backsound.mp3?t=${new Date().getTime()}`} type="audio/mpeg" />
+      <source src={`/api/backsound?t=${new Date().getTime()}`} type="audio/mpeg" />
     </audio>
   );
 }

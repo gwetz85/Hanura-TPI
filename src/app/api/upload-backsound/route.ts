@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { writeFile } from "fs/promises";
-import path from "path";
-import fs from "fs";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,16 +27,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid file data format" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(base64String, "base64");
-
-    // Save to public/uploads/backsound.mp3
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filePath = path.join(uploadDir, "backsound.mp3");
-    await writeFile(filePath, buffer);
+    // Save base64 string directly to DB (Vercel Serverless environment is Read-Only for FS)
+    await prisma.appSetting.upsert({
+      where: { key: "backsound_base64" },
+      update: { value: base64String },
+      create: { key: "backsound_base64", value: base64String }
+    });
 
     return NextResponse.json({ success: true, message: "Backsound uploaded successfully" });
   } catch (error: any) {

@@ -138,7 +138,7 @@ export default function BacksoundPage() {
 
         <div style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
           <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem", color: "#D4AF37" }}>Test Play Backsound (Saat Ini)</h3>
-          <audio controls src="/uploads/backsound.mp3" style={{ width: "100%" }}>
+          <audio controls src={`/api/backsound?t=${new Date().getTime()}`} style={{ width: "100%" }}>
             Browser Anda tidak mendukung elemen audio.
           </audio>
           <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.6)", marginTop: "0.5rem" }}>
