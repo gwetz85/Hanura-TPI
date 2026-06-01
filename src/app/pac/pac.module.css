@@ -227,12 +227,23 @@
 .navGrid::-webkit-scrollbar {
   height: 4px;
 }
-.navGrid::-webkit-scrollbar-track {
-  background: transparent;
+  overflow: hidden;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  align-items: stretch;
 }
-.navGrid::-webkit-scrollbar-thumb {
-  background: rgba(212,175,55,0.3);
-  border-radius: 4px;
+
+.navCard {
+  background: rgba(25, 25, 30, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+  text-decoration: none; color: #f0f0f0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .grid {

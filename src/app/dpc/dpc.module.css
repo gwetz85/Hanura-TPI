@@ -152,10 +152,11 @@
 .navGrid {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   overflow: hidden;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-bottom: 1.25rem;
+  align-items: stretch;
 }
 
 .navCard {
@@ -163,10 +164,12 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 1rem;
-  display: flex; flex-direction: column; gap: 0.4rem;
+  padding: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
   text-decoration: none; color: #f0f0f0;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .navCard:hover {
@@ -175,10 +178,10 @@
   border-color: rgba(212,175,55,0.4);
 }
 
-.navIcon { font-size: 1.4rem; }
-.navTitle { font-size: 0.8rem; font-weight: 600; color: #D4AF37; line-height: 1.2; }
-.navDesc { font-size: 0.7rem; color: #a0a0a0; line-height: 1.3; }
-.navArrow { margin-top: auto; font-size: 0.75rem; color: #D4AF37; transition: transform 0.2s; }
+.navIcon { font-size: 1.2rem; }
+.navTitle { font-size: 0.72rem; font-weight: 600; color: #D4AF37; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.navDesc { font-size: 0.65rem; color: #a0a0a0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.navArrow { margin-top: auto; font-size: 0.7rem; color: #D4AF37; transition: transform 0.2s; }
 .navCard:hover .navArrow { transform: translateX(4px); }
 
 .logoutBtn {
