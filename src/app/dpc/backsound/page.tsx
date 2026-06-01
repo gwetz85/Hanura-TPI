@@ -51,14 +51,16 @@ export default function BacksoundPage() {
     setLoading(true);
     setMessage(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/upload-backsound", {
-        method: "POST",
-        body: formData,
-      });
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64Data = reader.result as string;
+      try {
+        const res = await fetch("/api/upload-backsound", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileData: base64Data }),
+        });
 
       const data = await res.json();
 
@@ -71,11 +73,16 @@ export default function BacksoundPage() {
       } else {
         setMessage({ text: data.error || "Gagal mengupload file", type: "error" });
       }
-    } catch (err) {
-      setMessage({ text: "Terjadi kesalahan sistem", type: "error" });
-    } finally {
+      } catch (err) {
+        setMessage({ text: "Terjadi kesalahan sistem", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.onerror = () => {
+      setMessage({ text: "Gagal membaca file", type: "error" });
       setLoading(false);
-    }
+    };
   };
 
   return (
