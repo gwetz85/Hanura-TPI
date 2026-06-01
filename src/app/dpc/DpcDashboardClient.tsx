@@ -82,12 +82,13 @@ export default function DpcDashboardClient({ userName, userRole, pendingKta, pen
     { icon: "👥", title: "Upload Daftar Anggota", desc: "Upload daftar anggota resmi untuk masing-masing PAC.", href: "/dpc/members" },
     { icon: "⚙️", title: "Kelola Akun", desc: "Tambah, ubah, atau hapus akun PAC.", href: "/dpc/accounts" },
     { icon: "🗓️", title: "Kelola Event", desc: "Tambahkan kegiatan dan aktifkan countdown global.", href: "/dpc/events" },
+    { icon: "🎵", title: "Upload Backsound", desc: "Upload MP3 yang akan diputar otomatis saat DPC/PAC login.", href: "/dpc/backsound" },
     { icon: "🏛️", title: "Kepengurusan", desc: "Struktur organisasi dan kepengurusan Partai Hanura.", href: "/kepengurusan" },
   ];
 
-  // Filter menus: Kelola Akun and Kelola Event are ADMIN only
+  // Filter menus: Kelola Akun, Kelola Event, and Upload Backsound are ADMIN only
   const menus = allMenus.filter(m => {
-    if (m.href === "/dpc/accounts" || m.href === "/dpc/events") {
+    if (m.href === "/dpc/accounts" || m.href === "/dpc/events" || m.href === "/dpc/backsound") {
       return userRole === "ADMIN";
     }
     return true;
