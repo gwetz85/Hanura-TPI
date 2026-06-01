@@ -5,6 +5,7 @@ import SessionWrapper from "@/components/SessionWrapper";
 import EventCountdown from "@/components/EventCountdown";
 import GlobalLogo from "@/components/GlobalLogo";
 import BacksoundPlayer from "@/components/BacksoundPlayer";
+import GlobalBackground from "@/components/GlobalBackground";
 import prisma from "@/lib/prisma";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {/* Logo tersembunyi di halaman login */}
         <GlobalLogo />
         <SessionWrapper>
+          <GlobalBackground />
           <BacksoundPlayer />
           <EventCountdown initialEvent={activeEvent} />
           {children}
