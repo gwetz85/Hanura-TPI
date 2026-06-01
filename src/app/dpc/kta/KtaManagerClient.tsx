@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import styles from "../crud.module.css";
 
 interface Submission {
@@ -54,7 +55,7 @@ export default function KtaManagerClient({ submissions: initial, pacs }: { submi
   return (
     <div className={styles.container}>
       <div className={styles.glassCard}>
-        <a href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</a>
+        <Link href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</Link>
         
         <div className={styles.header} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
           <div>

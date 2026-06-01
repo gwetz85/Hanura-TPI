@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import sharedStyles from "../crud.module.css";
 import localStyles from "./accounts.module.css";
 

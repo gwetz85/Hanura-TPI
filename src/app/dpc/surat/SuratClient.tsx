@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import crudStyles from "../crud.module.css";
 import styles from "./surat.module.css";
 
@@ -221,7 +222,7 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
   return (
     <div className={crudStyles.container}>
       <div className={crudStyles.glassCard}>
-        <a href="/dpc" className={crudStyles.backLink}>← Kembali ke Dashboard DPC</a>
+        <Link href="/dpc" className={crudStyles.backLink}>← Kembali ke Dashboard DPC</Link>
         
         <div className={crudStyles.header} style={{ marginBottom: "1rem" }}>
           <div>

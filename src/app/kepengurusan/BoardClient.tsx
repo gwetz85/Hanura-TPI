@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import styles from "../dpc/crud.module.css";
 
 interface BoardMember {
@@ -114,7 +115,7 @@ export default function BoardClient({ boardMembers: _initialMembers, userRole }:
     <div className={styles.container} style={{ alignItems: "flex-start" }}>
       <div className={styles.glassCard} style={{ maxWidth: "960px", margin: "0 auto" }}>
 
-        <a href={isDpc ? "/dpc" : "/pac"} className={styles.backLink} style={{ fontSize: "1rem" }}>← Kembali ke Dashboard</a>
+        <Link href={isDpc ? "/dpc" : "/pac"} className={styles.backLink} style={{ fontSize: "1rem" }}>← Kembali ke Dashboard</Link>
 
         <div className={styles.header}>
           <div>

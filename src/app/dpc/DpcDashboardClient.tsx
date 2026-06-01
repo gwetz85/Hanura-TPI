@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import styles from "./dpc.module.css";
 
@@ -245,12 +246,12 @@ export default function DpcDashboardClient({ userName, userRole, pendingKta, pen
 
       <div className={styles.navGrid}>
         {menus.map(m => (
-          <a key={m.href} href={m.href} className={styles.navCard}>
+          <Link key={m.href} href={m.href} className={styles.navCard}>
             <div className={styles.navIcon}>{m.icon}</div>
             <div className={styles.navTitle}>{m.title}</div>
             <div className={styles.navDesc}>{m.desc}</div>
             <div className={styles.navArrow}>Buka →</div>
-          </a>
+          </Link>
         ))}
       </div>
 

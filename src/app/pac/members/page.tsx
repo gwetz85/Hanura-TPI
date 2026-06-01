@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./members.module.css";
@@ -81,7 +82,7 @@ export default function MembersPage() {
   return (
     <div className={styles.container}>
       <div className={styles.glassCard}>
-        <a href="/pac" className={styles.backLink}>← Kembali ke Dashboard</a>
+        <Link href="/pac" className={styles.backLink}>← Kembali ke Dashboard</Link>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <h1 className={styles.title}>Daftar Anggota PAC</h1>

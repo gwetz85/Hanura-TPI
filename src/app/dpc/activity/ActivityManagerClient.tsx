@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import styles from "../crud.module.css";
 import { useRouter } from "next/navigation";
 
@@ -171,7 +172,7 @@ export default function ActivityManagerClient({ suggestions: initial, pacs }: { 
   return (
     <div className={styles.container}>
       <div className={styles.glassCard} style={{ maxWidth: "900px" }}>
-        <a href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</a>
+        <Link href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</Link>
         
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
           <div>

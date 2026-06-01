@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./pac.module.css";
@@ -105,12 +106,12 @@ export default function PacDashboard() {
       <div className={styles.rightColumn}>
         <div className={styles.grid}>
           {menus.map(m => (
-            <a key={m.href} href={m.href} className={styles.card}>
+            <Link key={m.href} href={m.href} className={styles.card}>
               <div className={styles.cardIcon}>{m.icon}</div>
               <div className={styles.cardTitle}>{m.title}</div>
               <div className={styles.cardDesc}>{m.desc}</div>
               <div className={styles.cardArrow}>Buka →</div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

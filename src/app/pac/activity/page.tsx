@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./activity.module.css";
@@ -96,7 +97,7 @@ export default function ActivityPage() {
   return (
     <div className={styles.container}>
       <div className={styles.glassCard} style={{ maxWidth: "900px" }}>
-        <a href="/pac" className={styles.backLink}>← Kembali ke Dashboard</a>
+        <Link href="/pac" className={styles.backLink}>← Kembali ke Dashboard</Link>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
           <div>

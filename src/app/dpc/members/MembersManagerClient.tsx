@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import styles from "../crud.module.css";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -254,7 +255,7 @@ export default function MembersManagerClient({ members: initialMembers, pacs, us
   return (
     <div className={styles.container}>
       <div className={styles.glassCard}>
-        <a href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</a>
+        <Link href="/dpc" className={styles.backLink}>← Kembali ke Dashboard DPC</Link>
 
         <div className={styles.header}>
           <div>

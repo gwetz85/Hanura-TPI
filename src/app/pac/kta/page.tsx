@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./kta.module.css";
@@ -89,7 +90,7 @@ export default function KtaPage() {
   return (
     <div className={styles.container}>
       <div className={styles.glassCard}>
-        <a href="/pac" className={styles.backLink}>← Kembali ke Dashboard</a>
+        <Link href="/pac" className={styles.backLink}>← Kembali ke Dashboard</Link>
         <h1 className={styles.title}>Formulir Pengajuan KTA</h1>
 
         {error && <div className={styles.error}>{error}</div>}
