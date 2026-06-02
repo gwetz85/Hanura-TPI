@@ -131,13 +131,24 @@ export default function SuratClient({ initialSuratMasuk, initialSuratKeluar }: P
     try {
       let fileUrl = existingFileUrl || "";
       if (selectedFile) {
-        setUploadProgress("Mengupload file surat...");
-        const fd = new FormData();
-        fd.append("file", selectedFile);
-        const resUpload = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!resUpload.ok) throw new Error("Gagal mengupload berkas surat");
-        const dataUpload = await resUpload.json();
-        fileUrl = dataUpload.url;
+        setUploadProgress("Mengupload file surat ke Cloud Storage...");
+        const { supabase } = await import("@/lib/supabase");
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2,9)}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('arsip')
+          .upload(fileName, selectedFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          throw new Error("Gagal mengupload berkas ke cloud: " + error.message);
+        }
+        
+        const { data: { publicUrl } } = supabase.storage.from('arsip').getPublicUrl(fileName);
+        fileUrl = publicUrl;
         setUploadProgress("Upload sukses!");
       }
 
