@@ -65,7 +65,18 @@ export default function PacDashboard() {
       <div className={styles.leftColumn}>
         <div className={styles.header}>
           <p className={styles.greeting}>Selamat datang,</p>
-          <h1 className={styles.title}>{session.user?.name ?? "PAC"}</h1>
+          <h1 className={styles.title}>
+            {session.user?.name ? (
+              <>
+                {session.user.name.split(" ")[0]}{" "}
+                <span className={styles.highlight}>
+                  {session.user.name.split(" ").slice(1).join(" ")}
+                </span>
+              </>
+            ) : (
+              "PAC"
+            )}
+          </h1>
         </div>
 
         <div className={styles.actionRow}>
