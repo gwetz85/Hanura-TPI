@@ -20,6 +20,7 @@ model User {
   activitySuggestions  ActivitySuggestion[]
   members              Member[]
   activityComments     ActivityComment[]
+  archives             Archive[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -159,3 +160,14 @@ model AppSetting {
   updatedAt DateTime @updatedAt
 }
 
+
+model Archive {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String?
+  uploaderId  String
+  uploader    User     @relation(fields: [uploaderId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
