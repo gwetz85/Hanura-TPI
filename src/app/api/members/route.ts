@@ -13,11 +13,11 @@ export async function GET(request: Request) {
 
   let targetPacId = session.user.id;
 
-  if (session.user.role === "DPC") {
+  if (session.user.role === "DPC" || session.user.role === "ADMIN") {
     if (pacId) {
       targetPacId = pacId;
     } else {
-      // If DPC doesn't specify a PAC, return all members (optionally filtered by gender)
+      // If DPC/ADMIN doesn't specify a PAC, return all members (optionally filtered by gender)
       const genderWhere = buildGenderWhere(gender);
       const members = await prisma.member.findMany({
         where: genderWhere ?? undefined,
