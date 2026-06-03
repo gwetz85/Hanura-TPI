@@ -64,8 +64,8 @@ export default function PacDashboard() {
     <div className={styles.container}>
       <div className={styles.leftColumn}>
         <div className={styles.header}>
-          <p className={styles.greeting}>Selamat datang,</p>
           <h1 className={styles.title}>
+            Selamat datang,{" "}
             {session.user?.name ? (
               <>
                 {session.user.name.split(" ")[0]}{" "}

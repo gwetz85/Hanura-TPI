@@ -138,8 +138,7 @@ export default function DpcDashboardClient({ userName, userRole, pendingKta, pen
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <p className={styles.greeting}>Selamat datang,</p>
-        <h1 className={styles.title}>{userName}</h1>
+        <h1 className={styles.title}>Selamat datang, {userName}</h1>
       </div>
 
       <div className={styles.statsGrid}>
