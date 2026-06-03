@@ -25,6 +25,8 @@ const LEVELS = [
 
 export default function BoardClient({ boardMembers: _initialMembers, userRole }: { boardMembers: BoardMember[], userRole: string }) {
   const isDpc = userRole === "DPC";
+  const isAdmin = userRole === "ADMIN";
+  const canManage = isDpc || isAdmin; // Both DPC and ADMIN can upload/edit/delete SK
 
   const [skUrls, setSkUrls] = useState<Record<string, string | null>>({});
   const [uploadingSk, setUploadingSk] = useState<string | null>(null);
@@ -115,7 +117,7 @@ export default function BoardClient({ boardMembers: _initialMembers, userRole }:
     <div className={styles.container} style={{ alignItems: "flex-start" }}>
       <div className={styles.glassCard} style={{ maxWidth: "960px", margin: "0 auto" }}>
 
-        <Link href={isDpc ? "/dpc" : "/pac"} className={styles.backLink} style={{ fontSize: "1rem" }}>← Kembali ke Dashboard</Link>
+        <Link href={isAdmin ? "/dpc" : isDpc ? "/dpc" : "/pac"} className={styles.backLink} style={{ fontSize: "1rem" }}>← Kembali ke Dashboard</Link>
 
         <div className={styles.header}>
           <div>
@@ -151,10 +153,10 @@ export default function BoardClient({ boardMembers: _initialMembers, userRole }:
                         ) : (
                           <span style={{ color: "#555", fontSize: "0.95rem", padding: "0.5rem 1.1rem" }}>Belum ada SK</span>
                         )}
-                        {isDpc && (
+                        {canManage && (
                           <>
                             <label className={styles.btnSave} style={{ cursor: "pointer", fontSize: "0.95rem", padding: "0.5rem 1.1rem", borderRadius: "10px" }}>
-                              {isUploading ? "⏳ Uploading..." : "📤 Upload SK"}
+                              {isUploading ? "⏳ Uploading..." : hasSk ? "✏️ Ganti SK" : "📤 Upload SK"}
                               <input type="file" accept="application/pdf,image/*" style={{ display: "none" }} onChange={(e) => handleUploadSk(lvl.key, e)} disabled={isUploading} />
                             </label>
                             {hasSk && (
