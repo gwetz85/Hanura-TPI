@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
@@ -18,8 +18,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 
   try {
+    const { id } = await params;
     const documentation = await prisma.documentation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title,
         description,
@@ -33,7 +34,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
@@ -42,8 +43,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   }
 
   try {
+    const { id } = await params;
     await prisma.documentation.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ message: "Deleted successfully" });
