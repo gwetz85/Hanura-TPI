@@ -21,6 +21,7 @@ model User {
   members              Member[]
   activityComments     ActivityComment[]
   archives             Archive[]
+  documentations       Documentation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -166,6 +167,17 @@ model Archive {
   title       String
   description String?
   fileUrl     String?
+  uploaderId  String
+  uploader    User     @relation(fields: [uploaderId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Documentation {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  photoUrls   String[]
   uploaderId  String
   uploader    User     @relation(fields: [uploaderId], references: [id])
   createdAt   DateTime @default(now())
