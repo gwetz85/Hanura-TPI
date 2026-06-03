@@ -26,7 +26,8 @@ async function loadBackground(): Promise<string | null> {
   // Prevent duplicate fetches
   if (fetchPromise) return fetchPromise;
 
-  fetchPromise = fetch("/api/background", { cache: "force-cache" })
+  // Use no-store and timestamp cache buster because localStorage handles caching, so when cache is missed/cleared, it must fetch fresh
+  fetchPromise = fetch(`/api/background?t=${Date.now()}`, { cache: "no-store" })
     .then(async (res) => {
       if (!res.ok) {
         memoryCache = "none";

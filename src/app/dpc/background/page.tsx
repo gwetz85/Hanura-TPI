@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../crud.module.css";
+import { invalidateBackgroundCache } from "@/components/GlobalBackground";
 
 export default function BackgroundPage() {
   const { data: session, status } = useSession();
@@ -60,6 +61,8 @@ export default function BackgroundPage() {
           setMessage({ text: data.message || "Background berhasil diupload!", type: "success" });
           setFile(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
+          // Invalidate client cache before reload
+          invalidateBackgroundCache();
           // Force reload to apply background immediately
           setTimeout(() => window.location.reload(), 1500);
         } else {
