@@ -22,6 +22,9 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedTugas, setSelectedTugas] = useState<Tugas | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState("");
 
   const [formData, setFormData] = useState({
     dasarKegiatan: "",
@@ -39,6 +42,10 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
       if (res.ok) {
         const data = await res.json();
         setTugasList(data);
+        if (selectedTugas) {
+          const updated = data.find((t: Tugas) => t.id === selectedTugas.id);
+          if (updated) setSelectedTugas(updated);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -50,6 +57,27 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
   useEffect(() => {
     fetchTugas();
   }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    setIsUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", e.target.files[0]);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      if (res.ok) {
+        const data = await res.json();
+        setFormData({ ...formData, suratTugasUrl: data.url });
+      } else {
+        alert("Gagal mengupload file");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat upload.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +139,36 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
 
   const openDetailModal = (tugas: Tugas) => {
     setSelectedTugas(tugas);
+    setIsEditingNotes(false);
+    setTempNotes("");
     setDetailModalOpen(true);
+  };
+
+  const saveNotesOnly = async () => {
+    if (!selectedTugas) return;
+    try {
+      const res = await fetch(`/api/dpc/tugas/${selectedTugas.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dasarKegiatan: selectedTugas.dasarKegiatan,
+          namaKegiatan: selectedTugas.namaKegiatan,
+          lokasi: selectedTugas.lokasi,
+          tanggal: new Date(selectedTugas.tanggal).toISOString().slice(0, 16),
+          suratTugasUrl: selectedTugas.suratTugasUrl,
+          hasilPertemuan: tempNotes
+        })
+      });
+
+      if (res.ok) {
+        setIsEditingNotes(false);
+        fetchTugas();
+      } else {
+        alert("Gagal menyimpan catatan");
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handlePrint = () => {
@@ -189,12 +246,16 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
                   <input type="datetime-local" className={styles.input} required value={formData.tanggal} onChange={e => setFormData({ ...formData, tanggal: e.target.value })} />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Link Surat Tugas (Opsional)</label>
-                  <input type="url" className={styles.input} value={formData.suratTugasUrl} onChange={e => setFormData({ ...formData, suratTugasUrl: e.target.value })} placeholder="https://..." />
+                  <label>Upload Surat Tugas (Opsional)</label>
+                  <input type="file" accept=".pdf,.doc,.docx,image/*" className={styles.input} onChange={handleFileUpload} />
+                  {isUploading && <span style={{ color: "#4facfe", fontSize: "0.85rem", marginTop: "0.5rem", display: "block" }}>Sedang mengupload...</span>}
+                  {formData.suratTugasUrl && !isUploading && (
+                    <span style={{ color: "#4facfe", fontSize: "0.85rem", marginTop: "0.5rem", display: "block" }}>File berhasil diupload.</span>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
                   <label>Catatan / Hasil Pertemuan</label>
-                  <textarea className={styles.textarea} required value={formData.hasilPertemuan} onChange={e => setFormData({ ...formData, hasilPertemuan: e.target.value })} placeholder="Ketik hasil laporan pertemuan di sini..."></textarea>
+                  <textarea className={styles.textarea} value={formData.hasilPertemuan} onChange={e => setFormData({ ...formData, hasilPertemuan: e.target.value })} placeholder="Ketik hasil laporan pertemuan di sini... (opsional saat ini, bisa diisi nanti)"></textarea>
                 </div>
               </div>
               <div className={styles.modalFooter}>
@@ -241,10 +302,33 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
               </div>
 
               <div className={styles.detailSection}>
-                <h4 style={{ marginBottom: "1rem", color: "#adb5bd" }}>Hasil Pertemuan / Catatan:</h4>
-                <div className={styles.detailTextarea}>
-                  {selectedTugas.hasilPertemuan}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                  <h4 style={{ color: "#adb5bd", margin: 0 }}>Hasil Pertemuan / Catatan:</h4>
+                  {!isEditingNotes && (
+                    <button className={styles.actionBtn} onClick={() => { setIsEditingNotes(true); setTempNotes(selectedTugas.hasilPertemuan || ""); }}>
+                      Edit Catatan
+                    </button>
+                  )}
                 </div>
+                
+                {isEditingNotes ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <textarea 
+                      className={styles.textarea} 
+                      value={tempNotes} 
+                      onChange={(e) => setTempNotes(e.target.value)} 
+                      placeholder="Ketik catatan hasil pertemuan..."
+                    ></textarea>
+                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                      <button className={styles.cancelBtn} style={{ padding: "0.5rem 1rem" }} onClick={() => setIsEditingNotes(false)}>Batal</button>
+                      <button className={styles.submitBtn} style={{ padding: "0.5rem 1rem" }} onClick={saveNotesOnly}>Simpan Catatan</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.detailTextarea}>
+                    {selectedTugas.hasilPertemuan ? selectedTugas.hasilPertemuan : <span style={{ fontStyle: "italic", opacity: 0.5 }}>Belum ada catatan. Klik Edit untuk menambahkan.</span>}
+                  </div>
+                )}
               </div>
 
               <div style={{ marginTop: "3rem", textAlign: "right" }}>

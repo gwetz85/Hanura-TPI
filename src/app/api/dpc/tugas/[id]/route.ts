@@ -14,8 +14,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   const { dasarKegiatan, namaKegiatan, lokasi, tanggal, suratTugasUrl, hasilPertemuan } = await req.json();
 
-  if (!dasarKegiatan || !namaKegiatan || !lokasi || !tanggal || !hasilPertemuan) {
-    return NextResponse.json({ error: "Semua field wajib diisi kecuali Surat Tugas" }, { status: 400 });
+  if (!dasarKegiatan || !namaKegiatan || !lokasi || !tanggal || typeof hasilPertemuan === "undefined") {
+    return NextResponse.json({ error: "Dasar, Nama, Lokasi, dan Tanggal wajib diisi" }, { status: 400 });
   }
 
   try {
