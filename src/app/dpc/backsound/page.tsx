@@ -30,7 +30,7 @@ export default function BacksoundPage() {
   }, []);
 
   if (!session) return null;
-  if (session.user?.role !== "ADMIN" && session.user?.role !== "PETUGAS") {
+  if (session.user?.role !== "ADMIN") {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
