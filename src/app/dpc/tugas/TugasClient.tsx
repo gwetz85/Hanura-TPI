@@ -284,6 +284,7 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
           <div className={`${styles.modalContent} ${styles.printArea}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Laporan Catatan Tugas</h3>
+              <button className={styles.backBtn} onClick={() => setDetailModalOpen(false)} style={{ marginRight: "0.5rem" }}>Kembali</button>
               <button className={styles.closeBtn} onClick={() => setDetailModalOpen(false)}>&times;</button>
             </div>
             <div className={styles.modalBody}>
