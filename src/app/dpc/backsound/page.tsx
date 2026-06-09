@@ -119,6 +119,13 @@ export default function BacksoundPage() {
 
   return (
     <div className={styles.container}>
+      <div style={{ padding: "1.5rem 1.5rem 0" }}>
+        <Link href="/dpc" style={{
+          display: "inline-flex", alignItems: "center", gap: "0.5rem",
+          color: "#D4AF37", fontSize: "0.875rem", textDecoration: "none",
+          transition: "gap 0.2s"
+        }}>← Kembali ke Dashboard</Link>
+      </div>
       <div className={styles.header}>
         <h1 className={styles.title}>🎵 Upload Backsound</h1>
         <p className={styles.subtitle}>Upload file MP3 untuk dimainkan otomatis saat DPC/PAC login.</p>

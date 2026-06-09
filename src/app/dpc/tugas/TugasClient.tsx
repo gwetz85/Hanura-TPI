@@ -192,28 +192,9 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
 
   return (
     <div className={styles.container}>
-      <div style={{ marginBottom: "1rem" }}>
-        <button
-          onClick={() => router.back()}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            color: "rgba(255,255,255,0.8)",
-            borderRadius: "8px",
-            padding: "0.45rem 1rem",
-            fontSize: "0.85rem",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-        >
-          ← Kembali
-        </button>
-      </div>
+      <button onClick={() => router.back()} className={styles.backLink}>
+        ← Kembali ke Dashboard
+      </button>
       <div className={styles.header}>
         <h1 className={styles.title}>Catatan Tugas & Pertemuan</h1>
         <button className={styles.addBtn} onClick={openAddModal}>+ Tambah Catatan</button>
