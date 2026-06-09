@@ -9,7 +9,7 @@ export default async function Home() {
     redirect("/login");
   }
 
-  if (session.user.role === "DPC") {
+  if (["DPC", "ADMIN", "PETUGAS"].includes(session.user.role)) {
     redirect("/dpc");
   } else {
     redirect("/pac");

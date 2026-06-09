@@ -11,8 +11,8 @@ import { NextResponse } from "next/server";
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) {
-      return NextResponse.json({ error: "Unauthorized – hanya DPC yang dapat mengakses endpoint ini" }, { status: 401 });
+    if (!session || !["DPC", "ADMIN", "PETUGAS"].includes(session.user?.role as string)) {
+      return NextResponse.json({ error: "Unauthorized – hanya DPC/Petugas yang dapat mengakses endpoint ini" }, { status: 401 });
     }
 
     const body = await req.json();

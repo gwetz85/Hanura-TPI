@@ -7,7 +7,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (!session?.user || !["ADMIN", "DPC", "PETUGAS"].includes(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (!session?.user || !["ADMIN", "DPC", "PETUGAS"].includes(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

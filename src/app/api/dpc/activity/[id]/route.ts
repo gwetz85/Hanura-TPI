@@ -32,7 +32,7 @@ export async function GET(
   }
 
   // Update read status
-  const isDpcAdmin = ["DPC", "ADMIN"].includes(session.user?.role as string);
+  const isDpcAdmin = ["DPC", "ADMIN", "PETUGAS"].includes(session.user?.role as string);
   if (isDpcAdmin && !suggestion.isReadByDpc) {
     await prisma.activitySuggestion.update({ where: { id }, data: { isReadByDpc: true } });
   } else if (!isDpcAdmin && !suggestion.isReadByPac) {
@@ -56,7 +56,7 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const isDpcAdmin = ["DPC", "ADMIN"].includes(session.user?.role as string);
+  const isDpcAdmin = ["DPC", "ADMIN", "PETUGAS"].includes(session.user?.role as string);
 
   // Check if suggestion exists
   const existing = await prisma.activitySuggestion.findUnique({ where: { id } });
@@ -119,7 +119,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) {
+  if (!session || !["DPC", "ADMIN", "PETUGAS"].includes(session.user?.role as string)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

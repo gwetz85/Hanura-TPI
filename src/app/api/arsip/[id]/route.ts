@@ -8,7 +8,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "DPC" && session.user.role !== "PETUGAS") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -38,7 +38,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "DPC" && session.user.role !== "PETUGAS") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

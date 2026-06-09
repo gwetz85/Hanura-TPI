@@ -16,7 +16,7 @@ export default function BackgroundPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (status === "loading") return <div className={styles.container}><p>Loading...</p></div>;
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || !["ADMIN", "PETUGAS"].includes(session.user?.role || "")) {
     router.push("/dpc");
     return null;
   }

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   let targetPacId = session.user.id;
 
-  if (session.user.role === "DPC" || session.user.role === "ADMIN") {
+  if (session.user.role === "DPC" || session.user.role === "ADMIN" || session.user.role === "PETUGAS") {
     if (pacId) {
       targetPacId = pacId;
     } else {

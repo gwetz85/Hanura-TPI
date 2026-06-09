@@ -9,7 +9,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || !["ADMIN", "PETUGAS"].includes(session.user?.role as string)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -21,7 +21,7 @@ export async function PUT(
       return NextResponse.json({ error: "Nama, username, dan role harus diisi" }, { status: 400 });
     }
 
-    const validRoles = ["DPC", "PAC_BARAT", "PAC_KOTA", "PAC_TIMUR", "PAC_BUKIT_BESTARI"];
+    const validRoles = ["DPC", "PAC_BARAT", "PAC_KOTA", "PAC_TIMUR", "PAC_BUKIT_BESTARI", "PETUGAS"];
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: "Role PAC tidak valid" }, { status: 400 });
     }
@@ -83,7 +83,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || !["ADMIN", "PETUGAS"].includes(session.user?.role as string)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

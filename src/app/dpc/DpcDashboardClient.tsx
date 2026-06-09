@@ -90,10 +90,10 @@ export default function DpcDashboardClient({ userName, userRole, pendingKta, pen
     { icon: "🏛️", title: "Kepengurusan", desc: "Struktur organisasi dan kepengurusan Partai Hanura.", href: "/kepengurusan" },
   ];
 
-  // Filter menus: Kelola Akun, Kelola Event, Background, and Upload Backsound are ADMIN only
+  // Filter menus: Kelola Akun, Kelola Event, Background, and Upload Backsound are ADMIN or PETUGAS
   const menus = allMenus.filter(m => {
     if (m.href === "/dpc/accounts" || m.href === "/dpc/events" || m.href === "/dpc/backsound" || m.href === "/dpc/background") {
-      return userRole === "ADMIN";
+      return userRole === "ADMIN" || userRole === "PETUGAS";
     }
     return true;
   });

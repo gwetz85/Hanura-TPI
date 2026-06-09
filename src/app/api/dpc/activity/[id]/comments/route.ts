@@ -30,7 +30,7 @@ export async function POST(
   }
 
   // PAC can only comment on their own suggestions
-  if (!["DPC", "ADMIN"].includes(session.user.role as string) && suggestion.pacId !== session.user.id) {
+  if (!["DPC", "ADMIN", "PETUGAS"].includes(session.user.role as string) && suggestion.pacId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -46,7 +46,7 @@ export async function POST(
   });
 
   // Mark as unread for the other party
-  const isDpcAdmin = ["DPC", "ADMIN"].includes(session.user.role as string);
+  const isDpcAdmin = ["DPC", "ADMIN", "PETUGAS"].includes(session.user.role as string);
   await prisma.activitySuggestion.update({
     where: { id: suggestionId },
     data: isDpcAdmin

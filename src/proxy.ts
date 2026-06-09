@@ -11,7 +11,7 @@ export async function proxy(request: NextRequest) {
 
   // Jika sudah login dan membuka halaman login, redirect ke dashboard
   if (isAuthPage && isAuth) {
-    if (["DPC", "ADMIN"].includes(token?.role as string)) {
+    if (["DPC", "ADMIN", "PETUGAS"].includes(token?.role as string)) {
       return NextResponse.redirect(new URL("/dpc", request.url));
     } else {
       return NextResponse.redirect(new URL("/pac", request.url));
@@ -27,11 +27,11 @@ export async function proxy(request: NextRequest) {
   }
 
   // Proteksi berbasis role
-  if (pathname.startsWith("/dpc") && !["DPC", "ADMIN"].includes(token?.role as string)) {
+  if (pathname.startsWith("/dpc") && !["DPC", "ADMIN", "PETUGAS"].includes(token?.role as string)) {
     return NextResponse.redirect(new URL("/pac", request.url));
   }
 
-  if (pathname.startsWith("/pac") && ["DPC", "ADMIN"].includes(token?.role as string)) {
+  if (pathname.startsWith("/pac") && ["DPC", "ADMIN", "PETUGAS"].includes(token?.role as string)) {
     return NextResponse.redirect(new URL("/dpc", request.url));
   }
 

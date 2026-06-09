@@ -8,7 +8,7 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
   // Hanya ADMIN atau DPC yang bisa mengakses arsip
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "DPC" && session.user.role !== "PETUGAS") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "DPC" && session.user.role !== "PETUGAS") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

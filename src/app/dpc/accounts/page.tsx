@@ -9,7 +9,7 @@ export const metadata = { title: "Kelola Akun – DPC HANURA TPI" };
 
 export default async function AccountsManagerPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || !["ADMIN", "PETUGAS"].includes(session.user?.role as string)) {
     redirect("/login");
   }
 

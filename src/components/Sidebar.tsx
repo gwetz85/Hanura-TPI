@@ -27,7 +27,7 @@ export default function Sidebar({ role, name }: SidebarProps) {
     { name: "Daftar Anggota", path: "/pac/anggota" },
   ];
 
-  const links = role === "DPC" ? dpcLinks : pacLinks;
+  const links = ["DPC", "ADMIN", "PETUGAS"].includes(role) ? dpcLinks : pacLinks;
 
   return (
     <aside className={styles.sidebarContainer}>

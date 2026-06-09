@@ -24,9 +24,9 @@ const LEVELS = [
 ];
 
 export default function BoardClient({ boardMembers: _initialMembers, userRole }: { boardMembers: BoardMember[], userRole: string }) {
-  const isDpc = userRole === "DPC";
+  const isDpc = userRole === "DPC" || userRole === "PETUGAS";
   const isAdmin = userRole === "ADMIN";
-  const canManage = isDpc || isAdmin; // Both DPC and ADMIN can upload/edit/delete SK
+  const canManage = isDpc || isAdmin; // DPC, PETUGAS, and ADMIN can upload/edit/delete SK
 
   const [skUrls, setSkUrls] = useState<Record<string, string | null>>({});
   const [uploadingSk, setUploadingSk] = useState<string | null>(null);

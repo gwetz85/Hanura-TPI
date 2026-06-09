@@ -10,8 +10,8 @@ export default async function DokumentasiPage() {
     redirect("/login");
   }
 
-  // Hanya ADMIN atau DPC yang bisa mengakses
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  // Hanya ADMIN, DPC, atau PETUGAS yang bisa mengakses
+  if (!["ADMIN", "DPC", "PETUGAS"].includes(session.user.role)) {
     redirect("/login");
   }
 

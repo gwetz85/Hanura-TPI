@@ -8,7 +8,7 @@ export const metadata = { title: "Kelola Usulan Kegiatan – DPC HANURA" };
 
 export default async function ActivityManagerPage() {
   const session = await getServerSession(authOptions);
-  if (!session || !["DPC", "ADMIN"].includes(session.user?.role as string)) redirect("/login");
+  if (!session || !["DPC", "ADMIN", "PETUGAS"].includes(session.user?.role as string)) redirect("/login");
 
   const suggestions = await prisma.activitySuggestion.findMany({
     include: {
@@ -19,7 +19,7 @@ export default async function ActivityManagerPage() {
   });
 
   const pacs = await prisma.user.findMany({
-    where: { role: { notIn: ["DPC", "ADMIN"] } },
+    where: { role: { notIn: ["DPC", "ADMIN", "PETUGAS"] } },
     select: { id: true, name: true },
     orderBy: { name: "asc" }
   });

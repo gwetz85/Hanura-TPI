@@ -10,7 +10,7 @@ export default async function ArsipPage() {
     redirect("/login");
   }
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "DPC") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "DPC" && session.user.role !== "PETUGAS") {
     redirect("/login"); // or some unauthorized page
   }
 

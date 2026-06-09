@@ -14,6 +14,7 @@ interface PacUser {
 
 const ROLE_LABELS: Record<string, string> = {
   DPC: "DPC Hanura TPI",
+  PETUGAS: "Petugas",
   PAC_BARAT: "PAC Tanjungpinang Barat",
   PAC_KOTA: "PAC Tanjungpinang Kota",
   PAC_TIMUR: "PAC Tanjungpinang Timur",
@@ -289,6 +290,7 @@ export default function AccountsManagerClient({ pacUsers: initial }: { pacUsers:
                     onChange={e => setRole(e.target.value)}
                   >
                     <option value="DPC">DPC (Pengurus Cabang)</option>
+                    <option value="PETUGAS">Petugas</option>
                     <option value="PAC_BARAT">PAC Tanjungpinang Barat</option>
                     <option value="PAC_KOTA">PAC Tanjungpinang Kota</option>
                     <option value="PAC_TIMUR">PAC Tanjungpinang Timur</option>
