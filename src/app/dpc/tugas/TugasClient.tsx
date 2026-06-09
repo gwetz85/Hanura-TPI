@@ -86,10 +86,15 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
       const url = isEdit ? `/api/dpc/tugas/${selectedTugas.id}` : "/api/dpc/tugas";
       const method = isEdit ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        tanggal: new Date(formData.tanggal).toISOString()
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
@@ -125,11 +130,17 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
 
   const openEditModal = (tugas: Tugas) => {
     setSelectedTugas(tugas);
+    
+    // Convert UTC Date back to local datetime-local string
+    const d = new Date(tugas.tanggal);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+
     setFormData({
       dasarKegiatan: tugas.dasarKegiatan,
       namaKegiatan: tugas.namaKegiatan,
       lokasi: tugas.lokasi,
-      tanggal: new Date(tugas.tanggal).toISOString().slice(0, 16),
+      tanggal: localISOTime,
       suratTugasUrl: tugas.suratTugasUrl || "",
       hasilPertemuan: tugas.hasilPertemuan
     });
@@ -154,7 +165,7 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
           dasarKegiatan: selectedTugas.dasarKegiatan,
           namaKegiatan: selectedTugas.namaKegiatan,
           lokasi: selectedTugas.lokasi,
-          tanggal: new Date(selectedTugas.tanggal).toISOString().slice(0, 16),
+          tanggal: selectedTugas.tanggal,
           suratTugasUrl: selectedTugas.suratTugasUrl,
           hasilPertemuan: tempNotes
         })
