@@ -290,25 +290,41 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
                 <div className={styles.detailValue}>
                   {new Date(selectedTugas.tanggal).toLocaleDateString("id-ID", { weekday: 'long', day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} WIB
                 </div>
-
-                {selectedTugas.suratTugasUrl && (
-                  <>
-                    <div className={styles.detailLabel}>Lampiran Surat Tugas:</div>
-                    <div className={styles.detailValue}>
-                      <a href={selectedTugas.suratTugasUrl} target="_blank" rel="noreferrer" style={{ color: "#4facfe" }}>Lihat Dokumen</a>
-                    </div>
-                  </>
-                )}
               </div>
+
+              {selectedTugas.suratTugasUrl && (
+                <div className={styles.detailSection} style={{ marginTop: "1rem", paddingTop: "1.5rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                    <h4 style={{ color: "#adb5bd", margin: 0 }}>Lampiran Surat Tugas:</h4>
+                    <a href={selectedTugas.suratTugasUrl} target="_blank" rel="noreferrer" style={{ color: "#4facfe", fontSize: "0.9rem" }}>Buka di Tab Baru</a>
+                  </div>
+                  {selectedTugas.suratTugasUrl.startsWith("data:image") ? (
+                    <img src={selectedTugas.suratTugasUrl} alt="Surat Tugas" style={{ maxWidth: "100%", borderRadius: "8px" }} />
+                  ) : (
+                    <iframe src={selectedTugas.suratTugasUrl} style={{ width: "100%", height: "600px", border: "none", borderRadius: "8px", background: "#fff" }} />
+                  )}
+                </div>
+              )}
 
               <div className={styles.detailSection}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                   <h4 style={{ color: "#adb5bd", margin: 0 }}>Hasil Pertemuan / Catatan:</h4>
-                  {!isEditingNotes && (
-                    <button className={styles.actionBtn} onClick={() => { setIsEditingNotes(true); setTempNotes(selectedTugas.hasilPertemuan || ""); }}>
-                      Edit Catatan
-                    </button>
-                  )}
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    {!isEditingNotes ? (
+                      <button className={styles.actionBtn} onClick={() => { setIsEditingNotes(true); setTempNotes(selectedTugas.hasilPertemuan || ""); }}>
+                        Edit Catatan
+                      </button>
+                    ) : (
+                      <>
+                        <button className={styles.cancelBtn} style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem" }} onClick={() => setIsEditingNotes(false)}>
+                          Batal
+                        </button>
+                        <button className={styles.submitBtn} style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem", background: "#f39c12" }} onClick={saveNotesOnly}>
+                          SIMPAN DRAFT
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 
                 {isEditingNotes ? (
@@ -318,11 +334,8 @@ export default function TugasClient({ userRole, userName }: { userRole: string; 
                       value={tempNotes} 
                       onChange={(e) => setTempNotes(e.target.value)} 
                       placeholder="Ketik catatan hasil pertemuan..."
+                      autoFocus
                     ></textarea>
-                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                      <button className={styles.cancelBtn} style={{ padding: "0.5rem 1rem" }} onClick={() => setIsEditingNotes(false)}>Batal</button>
-                      <button className={styles.submitBtn} style={{ padding: "0.5rem 1rem" }} onClick={saveNotesOnly}>Simpan Catatan</button>
-                    </div>
                   </div>
                 ) : (
                   <div className={styles.detailTextarea}>
