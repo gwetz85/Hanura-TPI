@@ -82,6 +82,7 @@ export default function DpcDashboardClient({ userName, userRole, pendingKta, pen
     { icon: "📸", title: "Dokumentasi", desc: "Simpan dan kelola foto kegiatan (hingga 50 foto per kegiatan).", href: "/dpc/dokumentasi" },
     { icon: "🪪", title: "Kelola Pengajuan KTA", desc: "Setujui atau tolak pengajuan KTA dari semua PAC.", href: "/dpc/kta" },
     { icon: "📋", title: "Kelola Usulan Kegiatan", desc: "Balas usulan kegiatan dari semua PAC.", href: "/dpc/activity" },
+    { icon: "📝", title: "Tugas", desc: "Catatan hasil pertemuan dan rapat.", href: "/dpc/tugas" },
     { icon: "👥", title: "Upload Daftar Anggota", desc: "Upload daftar anggota resmi untuk masing-masing PAC.", href: "/dpc/members" },
     { icon: "⚙️", title: "Kelola Akun", desc: "Tambah, ubah, atau hapus akun PAC.", href: "/dpc/accounts" },
     { icon: "🗓️", title: "Kelola Event", desc: "Tambahkan kegiatan dan aktifkan countdown global.", href: "/dpc/events" },

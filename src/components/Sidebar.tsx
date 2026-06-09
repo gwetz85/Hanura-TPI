@@ -17,6 +17,7 @@ export default function Sidebar({ role, name }: SidebarProps) {
     { name: "Dashboard", path: "/dpc" },
     { name: "Pengajuan KTA", path: "/dpc/kta" },
     { name: "Usulan Kegiatan", path: "/dpc/kegiatan" },
+    { name: "Tugas", path: "/dpc/tugas" },
     { name: "Daftar Anggota", path: "/dpc/anggota" },
   ];
 

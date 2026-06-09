@@ -22,6 +22,7 @@ model User {
   activityComments     ActivityComment[]
   archives             Archive[]
   documentations       Documentation[]
+  tugas                Tugas[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,4 +183,18 @@ model Documentation {
   uploader    User     @relation(fields: [uploaderId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Tugas {
+  id              String   @id @default(cuid())
+  dasarKegiatan   String
+  namaKegiatan    String
+  lokasi          String
+  tanggal         DateTime
+  suratTugasUrl   String?
+  hasilPertemuan  String   // Text (di PostgreSQL Text default untuk String panjang)
+  creatorId       String
+  creator         User     @relation(fields: [creatorId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
