@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   title: "DPC HANURA Tanjungpinang – Portal Internal",
   description: "Sistem komunikasi dan manajemen data internal DPC & PAC HANURA Tanjungpinang",
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/icon-192.png",
+    shortcut: "/icon-192.png",
+    apple: "/icon-192.png",
   },
 };
 
