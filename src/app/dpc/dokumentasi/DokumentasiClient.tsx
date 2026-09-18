@@ -29,6 +29,10 @@ export default function DokumentasiClient({ userRole }: { userRole: string }) {
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryTitle, setGalleryTitle] = useState("");
 
+  // Download State
+  const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadProgressText, setDownloadProgressText] = useState("");
+
   // Edit / Delete State
   const [editMode, setEditMode] = useState(false);
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
@@ -95,6 +99,59 @@ export default function DokumentasiClient({ userRole }: { userRole: string }) {
     setGalleryUrls(urls);
     setGalleryTitle(titleName);
     setShowGalleryModal(true);
+  };
+
+  const downloadPhoto = async (url: string, defaultName: string) => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Gagal mengambil file foto");
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = defaultName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+    } catch (err) {
+      console.warn("Direct blob download failed, trying fallback:", err);
+      const downloadUrl = url.includes("supabase.co")
+        ? (url.includes("?") ? `${url}&download=${encodeURIComponent(defaultName)}` : `${url}?download=${encodeURIComponent(defaultName)}`)
+        : url;
+
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = defaultName;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
+  const downloadAllPhotos = async (urls: string[], activityTitle: string) => {
+    if (!urls || urls.length === 0) return;
+    setDownloadingAll(true);
+    try {
+      const cleanTitle = activityTitle.replace(/[^a-zA-Z0-9_-]/g, "_");
+      for (let i = 0; i < urls.length; i++) {
+        const url = urls[i];
+        const ext = url.split(".").pop()?.split("?")[0] || "jpg";
+        const fileName = `${cleanTitle}_foto_${i + 1}.${ext}`;
+        setDownloadProgressText(`Mengunduh foto ${i + 1} dari ${urls.length}...`);
+        await downloadPhoto(url, fileName);
+        if (i < urls.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+        }
+      }
+      setDownloadProgressText(`Berhasil mengunduh ${urls.length} foto!`);
+      setTimeout(() => setDownloadProgressText(""), 3500);
+    } catch (error) {
+      alert("Gagal mengunduh beberapa foto.");
+    } finally {
+      setDownloadingAll(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,6 +253,24 @@ export default function DokumentasiClient({ userRole }: { userRole: string }) {
           </button>
         </div>
 
+        {downloadProgressText && !showGalleryModal && (
+          <div style={{
+            background: "rgba(212, 175, 55, 0.15)",
+            border: "1px solid rgba(212, 175, 55, 0.4)",
+            color: "#D4AF37",
+            padding: "0.75rem 1.2rem",
+            borderRadius: "10px",
+            marginBottom: "1.25rem",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.6rem"
+          }}>
+            <span>📥</span> {downloadProgressText}
+          </div>
+        )}
+
         <div style={{ overflowX: "auto" }}>
           {loading ? (
             <p className={crudStyles.empty}>Memuat daftar dokumentasi...</p>
@@ -233,7 +308,7 @@ export default function DokumentasiClient({ userRole }: { userRole: string }) {
                       <div style={{ fontSize: "0.75rem", color: "#a0a0a0" }}>{d.uploader.role}</div>
                     </td>
                     <td style={{ textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: "0.4rem", justifyContent: "center", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: "0.4rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
                         <button 
                           onClick={() => handlePreviewGallery(d.photoUrls, d.title)}
                           className={crudStyles.btnApprove}
@@ -241,6 +316,34 @@ export default function DokumentasiClient({ userRole }: { userRole: string }) {
                           disabled={d.photoUrls.length === 0}
                         >
                           🖼️ Lihat Foto
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (d.photoUrls.length === 1) {
+                              const cleanTitle = d.title.replace(/[^a-zA-Z0-9_-]/g, "_");
+                              const ext = d.photoUrls[0].split(".").pop()?.split("?")[0] || "jpg";
+                              downloadPhoto(d.photoUrls[0], `${cleanTitle}_foto_1.${ext}`);
+                            } else {
+                              downloadAllPhotos(d.photoUrls, d.title);
+                            }
+                          }}
+                          style={{ 
+                            fontSize: "0.85rem", 
+                            border: "1px solid rgba(212, 175, 55, 0.4)", 
+                            background: "rgba(212, 175, 55, 0.15)", 
+                            color: "#D4AF37", 
+                            cursor: (d.photoUrls.length === 0 || downloadingAll) ? "not-allowed" : "pointer", 
+                            padding: "0.4rem 0.9rem", 
+                            borderRadius: "8px", 
+                            fontWeight: 600,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.3rem"
+                          }}
+                          disabled={d.photoUrls.length === 0 || downloadingAll}
+                          title={d.photoUrls.length > 1 ? `Download semua (${d.photoUrls.length}) foto` : "Download foto"}
+                        >
+                          ⬇️ Unduh
                         </button>
                         <button 
                           onClick={() => openEditModal(d)}
@@ -374,22 +477,112 @@ export default function DokumentasiClient({ userRole }: { userRole: string }) {
         <div className={crudStyles.modalOverlay} onClick={() => setShowGalleryModal(false)} style={{ zIndex: 999999, padding: "1.5rem" }}>
           <div className={crudStyles.modalContent} onClick={e => e.stopPropagation()} style={{ width: "95%", maxWidth: "1200px", height: "90vh", display: "flex", flexDirection: "column", padding: "1.5rem 2rem", maxHeight: "calc(100vh - 3rem)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem", flexShrink: 0 }}>
-              <h2 style={{ margin: 0, color: "#D4AF37", fontSize: "1.4rem" }}>Galeri: {galleryTitle}</h2>
-              <button onClick={() => setShowGalleryModal(false)} className={crudStyles.btnReject} style={{ padding: "0.6rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "1rem", border: "none", cursor: "pointer" }}>✖ Tutup</button>
+              <div>
+                <h2 style={{ margin: 0, color: "#D4AF37", fontSize: "1.4rem" }}>Galeri: {galleryTitle}</h2>
+                <span style={{ fontSize: "0.85rem", color: "#a0a0a0" }}>Total {galleryUrls.length} Foto Kegiatan</span>
+              </div>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => downloadAllPhotos(galleryUrls, galleryTitle)}
+                  disabled={downloadingAll || galleryUrls.length === 0}
+                  style={{
+                    padding: "0.6rem 1.3rem",
+                    borderRadius: "10px",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    border: "none",
+                    cursor: (downloadingAll || galleryUrls.length === 0) ? "not-allowed" : "pointer",
+                    background: "linear-gradient(135deg, #D4AF37 0%, #AA771C 100%)",
+                    color: "#000",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    boxShadow: "0 4px 12px rgba(212,175,55,0.25)"
+                  }}
+                  title="Download semua foto dalam kegiatan ini"
+                >
+                  {downloadingAll ? "⏳ Mengunduh..." : `⬇️ Download Semua Foto (${galleryUrls.length})`}
+                </button>
+                <button onClick={() => setShowGalleryModal(false)} className={crudStyles.btnReject} style={{ padding: "0.6rem 1.4rem", borderRadius: "10px", fontWeight: 700, fontSize: "1rem", border: "none", cursor: "pointer" }}>✖ Tutup</button>
+              </div>
             </div>
+
+            {downloadProgressText && (
+              <div style={{
+                background: "rgba(212, 175, 55, 0.15)",
+                border: "1px solid rgba(212, 175, 55, 0.4)",
+                color: "#D4AF37",
+                padding: "0.65rem 1.2rem",
+                borderRadius: "8px",
+                marginBottom: "1rem",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexShrink: 0
+              }}>
+                <span>📥</span> {downloadProgressText}
+              </div>
+            )}
+
             <div style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "10px", overflowY: "auto", padding: "1rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-                {galleryUrls.map((url, idx) => (
-                  <a key={idx} href={url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                    <div style={{ width: "100%", paddingTop: "100%", position: "relative", borderRadius: "10px", overflow: "hidden", border: "2px solid rgba(255,255,255,0.1)", transition: "transform 0.2s" }} className="hover-zoom">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt={`Gallery ${idx}`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+                {galleryUrls.map((url, idx) => {
+                  const cleanTitle = galleryTitle.replace(/[^a-zA-Z0-9_-]/g, "_");
+                  const ext = url.split(".").pop()?.split("?")[0] || "jpg";
+                  const fileName = `${cleanTitle}_foto_${idx + 1}.${ext}`;
+                  return (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        background: "rgba(20, 20, 25, 0.75)", 
+                        border: "1px solid rgba(255,255,255,0.1)", 
+                        borderRadius: "10px", 
+                        overflow: "hidden", 
+                        display: "flex", 
+                        flexDirection: "column",
+                        transition: "all 0.2s"
+                      }}
+                      className="photo-card"
+                    >
+                      <a href={url} target="_blank" rel="noreferrer" title="Klik untuk melihat resolusi penuh" style={{ textDecoration: "none", cursor: "zoom-in" }}>
+                        <div style={{ width: "100%", paddingTop: "75%", position: "relative", backgroundColor: "rgba(0,0,0,0.3)" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt={`Gallery ${idx + 1}`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                      </a>
+                      <div style={{ padding: "0.6rem 0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", background: "rgba(0,0,0,0.25)" }}>
+                        <span style={{ fontSize: "0.8rem", color: "#c0c0c0", fontWeight: 500 }}>Foto #{idx + 1}</span>
+                        <button
+                          onClick={() => downloadPhoto(url, fileName)}
+                          style={{
+                            background: "rgba(212, 175, 55, 0.2)",
+                            color: "#D4AF37",
+                            border: "1px solid rgba(212, 175, 55, 0.4)",
+                            borderRadius: "6px",
+                            padding: "0.35rem 0.75rem",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.3rem",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#D4AF37"; e.currentTarget.style.color = "#000"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212, 175, 55, 0.2)"; e.currentTarget.style.color = "#D4AF37"; }}
+                          title={`Unduh Foto #${idx + 1}`}
+                        >
+                          ⬇️ Unduh
+                        </button>
+                      </div>
                     </div>
-                  </a>
-                ))}
+                  );
+                })}
               </div>
               <style dangerouslySetInnerHTML={{__html: `
-                .hover-zoom:hover { transform: scale(1.05); border-color: #D4AF37; }
+                .photo-card:hover { transform: translateY(-3px); border-color: #D4AF37; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
               `}} />
             </div>
           </div>
